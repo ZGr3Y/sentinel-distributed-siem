@@ -12,7 +12,7 @@ public class Alert {
     @Column(name = "id", nullable = false, updatable = false)
     private String id;
 
-    @Column(name = "type", nullable = false)
+    @Column(name = "alert_type", nullable = false)
     private String type; // e.g., "DOS", "BRUTE_FORCE"
 
     @Column(name = "source_ip", nullable = false)
