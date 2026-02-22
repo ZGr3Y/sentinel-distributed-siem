@@ -13,16 +13,19 @@ import com.sentinel.common.domain.dto.EventDTO;
 import com.sentinel.common.domain.entity.RawEvent;
 import com.sentinel.common.util.HashUtils;
 import com.sentinel.core.repository.RawEventRepository;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EventConsumerService {
 
     private static final Logger log = LoggerFactory.getLogger(EventConsumerService.class);
     private final RawEventRepository repository;
+    private final AnalyticsService analyticsService;
 
     @Autowired
-    public EventConsumerService(RawEventRepository repository) {
+    public EventConsumerService(RawEventRepository repository, AnalyticsService analyticsService) {
         this.repository = repository;
+        this.analyticsService = analyticsService;
     }
 
     @RabbitListener(queues = "${sentinel.queue.ingress}")
@@ -48,6 +51,17 @@ public class EventConsumerService {
             // 4. Persist to PostgreSQL (Idempotency enforced by DB constraints)
             repository.save(event);
             log.info("Processed and saved event: {}", eventHash);
+
+            // 5. Analytics & Threat Detection (Non-blocking, Asynchronous via
+            // CompletableFuture
+            // - Design Pattern 2.5)
+            CompletableFuture.runAsync(() -> {
+                try {
+                    analyticsService.analyzeEvent(dto);
+                } catch (Exception e) {
+                    log.error("Error during asynchronous analytics processing for event: {}", eventHash, e);
+                }
+            });
 
         } catch (DataIntegrityViolationException e) {
             log.warn("Duplicate event discarded: {}. Cause: {}", dto.getEventId(),
