@@ -38,3 +38,29 @@
 
 ---
 *(End of Entry)*
+
+## 📅 Log Entry: Phase 2 - Agent Module & Time-Shifted Replay Engine
+**Date:** 22 February 2026
+**Phase:** 2
+
+### 🎯 What Was Made
+1. **NASA Log Parser:** Built `NasaLogParser.java` using a robust Regex matcher (`^(\S+) - - \[(.+?)\] "(\S+) (.*?)(?: HTTP/\S+)?" (\d{3}) (\d+|-).*$`). It extracts all fields from the 1995 Hubble/KSC datasets and parses the timestamp via a dedicated `DateTimeFormatter` (`dd/MMM/yyyy:HH:mm:ss Z`).
+2. **Time-Shifted Replay Engine:** Developed `ReplayEngine.java` to fulfill REQ-AG-04. It reads the 205MB log file buffer-by-buffer. It calculates the `ChronoUnit.MILLIS` exact delay between sequential logs, and simulates real-world real-time traffic generation by utilizing `Thread.sleep(delay)`. It also updates the DTO's payload timestamp to `LocalDateTime.now()` to ensure downstream metrics engines don't receive data stamped in 1995.
+3. **Speedup Modifier:** To avoid waiting 30 days for 30 days of simulated traffic, implemented a `SPEEDUP_FACTOR` via `application.properties`. It divides the thread sleep delay by the factor (currently set to `100x` speed).
+4. **RabbitMQ Egress:** Added the `spring-boot-starter-amqp` integration. The Agent creates a persistent queue (`logs.ingress.key`), a `DirectExchange`, and auto-marshals the Java `EventDTO` pojos into JSON strings using a standardized Jackson ObjectMapper.
+
+### ⚠️ Problems Met & 🛠️ Solutions Applied
+
+**Problem 1: JUnit 5 Dependencies Missing in Test Execution**
+* **Description:** The execution of `./mvnw -pl sentinel-agent test` failed. Maven could not locate `org.junit.jupiter.api` despite our tests being written with valid JUnit 5 syntax.
+* **Solution:** Discovered the child `pom.xml` was only importing `spring-boot-starter` for the main application, lacking the testing BOMs. Injected `<artifactId>spring-boot-starter-test</artifactId>` into the `sentinel-agent` module to resolve all API imports.
+
+**Problem 2: Port 8080 Collision during Local Agent Boot**
+* **Description:** Executing the Agent via `./mvnw spring-boot:run` crashed repeatedly with `Web server failed to start. Port 8080 was already in use.`
+* **Solution:** Although the Agent is purely a background processing daemon and doesn't explicitly expose HTTP endpoints, `spring-boot-starter-web` spins up an embedded Tomcat server universally on 8080. Added `server.port=8081` to the Agent's application properties to circumvent local port exhaustions, and used `kill -9 $(lsof -t -i:8081)` to aggressively clear any zombie daemon locks holding the listener.
+
+**Problem 3: Missing Queues and Incomplete AMQP Imports**
+* **Description:** After pushing events to the RabbitMQ broker, the Management UI revealed 0 ingress. Testing manually with `curl` returned `Object Not Found`. The `RabbitTemplate` was routing messages into the void because the broker had no matching Queue topology.
+* **Solution:** Modified `RabbitMQConfig.java` to explicitly declare static `@Bean` components for the `Queue` and a `BindingBuilder` so Spring AMQP forces RabbitMQ to instantiate the `logs.ingress.key` persistent queue upon application connection. Fixed resulting Java import statement compiler errors.
+
+---
