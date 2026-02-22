@@ -1,0 +1,149 @@
+Memento
+•
+
+•
+
+[Gamma]
+
+Intento: senza violare l’incapsulamento, catturare ed esternalizzare lo
+stato interno di un oggetto così che l’oggetto può essere riportato a
+questo stato successivamente
+
+Memento
+•
+
+Motivazione
+•
+
+•
+
+•
+
+Alcune volte è necessario registrare lo stato interno di un oggetto.
+Questo è richiesto quando si implementano i meccanismi di
+checkpoint e di undo che permettono di ritornare da operazioni
+non riuscite o ripristinare il sistema da situazioni di errore
+Tuttavia, gli oggetti normalmente incapsulano il loro stato
+rendendolo inaccessibile ad altri oggetti e quindi impossibile
+salvarlo esternamente
+
+•
+
+Soluzione
+•
+
+Un memento è un oggetto che immagazzina una copia dello stato
+interno di un altro oggetto (detto originator)
+
+•
+
+Il meccanismo di undo richiederà un memento all’originator quando è
+necessario avere un checkpoint dello stato dell’originator
+
+•
+
+L’originator imposta il memento con i dati che caratterizzano il suo
+stato corrente
+
+•
+
+Solo l’originator può immagazzinare e riprendere informazioni dal
+memento
+
+Applicabilità
+•
+
+Esporre lo stato violerebbe l’incapsulamento, e questo può
+compromettere l’affidabilità e l’estensibilità
+1
+
+Usare il design pattern Memento quando si deve salvare una copia
+dello stato di un oggetto da ripristinare successivamente e quando una
+interfaccia che permette di ottenere lo stato esporrebbe dettagli di
+implementazione che violerebbero l’incapsulamento
+2
+
+Prof. Tramontana - Novembre 2021
+
+Memento
+•
+
+•
+
+Memento
+•
+
+Struttura
+Originator
+
+Memento
+
++setMemento()
++createMemento()
+
++getState()
++setState()
+
+Memento: immagazzina lo stato interno dell’oggetto Originator, quali
+dati sono necessari è una scelta dell’Originator; protegge da accessi di
+altri oggetti diversi dall’Originator. Solo all’Originator è permesso
+l’accesso allo stato interno del Memento
+
+•
+
+Originator: crea un Memento che contiene una copia del suo stato
+interno; usa il Memento per ripristinare il suo stato interno
+
+•
+
+Caretaker: è responsabile di tenere il Memento; non usa o esamina il
+contenuto del Memento
+3
+
+Conseguenze
+•
+
+Gli oggetti Memento evitano di esporre informazioni che solo l’Originator
+dovrebbe conoscere, eppure tali informazioni sono immagazzinate fuori
+dall’Originator
+
+•
+
+Semplifica l’Originator in quanto non deve tenere diverse versioni del suo
+stato che i client hanno chiesto di salvare
+
+•
+
+Se si chiede di copiare una grande quantità di informazioni o la richiesta di
+salvataggio dello stato avviene spesso, le prestazioni possono deteriorarsi
+
+•
+
+Può essere difficile permettere al solo Originator di accedere allo stato del
+Memento
+
+•
+
+Il Caretaker è responsabile della cancellazione dei Memento, ma non sa
+quanto sono grandi e questo può significare l’uso di tanto spazio su disco
+
+•
+
+Quando i Memento sono passati all’Originator in una sequenza predicibile,
+i Memento possono conservare solo il cambiamento incrementale dello
+stato interno dell’Originator
+
+Caretaker
+
+Partecipanti
+•
+
+Prof. Tramontana - Novembre 2021
+
+Prof. Tramontana - Novembre 2021
+
+4
+
+Prof. Tramontana - Novembre 2021
+
+

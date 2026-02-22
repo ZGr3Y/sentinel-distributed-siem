@@ -1,0 +1,51 @@
+# Sentinel Distributed SIEM Implementation Plan
+
+This document outlines the technical plan for building the Sentinel Distributed SIEM system based on the provided SRS, SAD, SDD, and TDD.
+
+## Overview
+The goal is to implement an Event-Driven distributed system consisting of an Agent for reading and replaying NASA HTTP logs, and a Core backend for ingesting, analyzing, and persisting the logs. The system emphasizes Distributed System Design Patterns such as Asynchronous Messaging, Remote Facade, Serialized LOB, Session State, and Circuit Breaker.
+
+## Proposed Architecture
+
+### 1. Project Infrastructure
+*   **Spring Boot 3 / Java 17** using **Maven** as the build tool. The system is split into two separate applications: `sentinel-agent` and `sentinel-core`.
+*   **Docker Compose** orchestrating PostgreSQL and RabbitMQ.
+*   **Database Schema:** Managed via Spring Data JPA (`hibernate.ddl-auto=update`).
+    *   **`raw_events`**: `id`, `event_hash` (unique), `source_ip`, `request_path`, `method`, `original_timestamp`, `bytes`, `status_code`, `severity`, `ingested_at`.
+    *   **`alerts`**: `id`, `alert_type`, `source_ip`, `description`, `created_at`.
+    *   **`daily_reports`**: `report_date`, `report_json` (JSONB).
+    *   **`user_sessions`**: Session state management.
+
+### 2. Modulo Agent (Producer)
+*   Streams `NASA_access_log_Aug95` or `Jul95` file with `Files.lines()`.
+*   Uses a regex matcher to extract IPs, timestamp, method, endpoint, status code, and bytes.
+*   Calculates a time delta to simulate a realistic replay feed using `Thread.sleep()`.
+*   **Idempotency Hash**: Generates a SHA-256 `eventId`. *Crucially, this hash is calculated on the ORIGINAL log string (or original timestamp + IP + path), NOT the shifted timestamp, ensuring that if the Agent resends the exact same log line, it yields the exact same hash.*
+*   Generates a structured JSON DTO including both the `originalTimestamp` and the `shiftedTimestamp` (for replay purposes).
+*   Pushes events to a RabbitMQ queue (`sentinel.queue.ingress`).
+
+### 3. Modulo Core & Analysis 
+*   **Ingestion:** `@RabbitListener` consumes the event. It relies on the `raw_events.event_hash` unique constraint to discard duplicates (Exactly-Once processing semantics via Database constraint).
+*   **Severity Tagging:** Validates endpoints (`..`, [/etc/passwd](file:///etc/passwd) = CRITICAL) and HTTP statuses (>= 400 = WARNING).
+*   **Analysis Engine (Sliding Window):** A Singleton component maintaining a `ConcurrentHashMap` of IPs mapped to `Deque<LocalDateTime>`. 
+    *   **Cleanup:** It cleans up events older than 60s. *To prevent memory leaks, it also removes the IP key entirely from the map if the Deque becomes empty.*
+    *   **Alert Generation:** Issues `DOS_ATTACK` (>100 reqs) or `BRUTE_FORCE` (>10 401/403 reqs). *To prevent alert flooding, a "cooldown" mechanism will track recently alerted IPs and suppress duplicate alerts for a configured time window (e.g., 5 minutes).*
+
+### 4. API & Security Layer
+*   **Remote Facade API:** `/api/dashboard/summary` returning database health, RabbitMQ health, event metrics, and recent alerts.
+*   **Batch Request API:** `/api/investigation/batch` accepting multiple IPs to report en-masse.
+*   **JWT & Session State:** JWT token for stateless authentication. We will use a hardcoded `/api/test/token` endpoint to generate valid JWTs for our testing. Long-form session state (drafts) is persisted to DB via `/api/draft`.
+*   **Serialized LOB:** Nightly job generates highly-aggregated daily summaries saved as a `JSONB` string.
+*   **Circuit Breaker:** Applied to the `daily_reports` read queries using `Resilience4j`. **Fallback Strategy:** If the circuit opens, the system will return the last successfully generated report held in a simple in-memory Java variable (e.g., an `AtomicReference` in the Service layer) to provide high availability without the complexity of Redis.
+
+## Verification Plan
+
+### Automated Tests
+*   We can create small unit tests for the Regex Parser to guarantee NASA log format compatibility.
+*   Test the `AnalysisEngine` sliding window with mocked timelines.
+
+### Manual Verification
+*   Start the entire stack via Docker.
+*   Run the Spring Boot application.
+*   Trigger the Agent to start emitting traffic.
+*   Observe the RabbitMQ queue, Database entries, and the generated Alerts via REST API calls.

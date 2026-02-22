@@ -1,0 +1,195 @@
+Ingegneria
+Dei Sistemi Distribuiti
+
+Lezioni
+• In Aula 36
+• Martedì 9:00–11:00
+• Giovedì 9:00–11:00
+• Laboratorio Venerdì 17:00-19:00
+• Coprono tutto il programma del corso
+
+• Materiale, link utili, avvisi
+• http://www.dmi.unict.it/tramonta/sdm
+
+• Partecipazione fortemente consigliata: si impara di
+
+più, e meglio, è possibile fare domande ed ottenere
+risposte!
+
+• GitHub
+• Telegram
+1
+
+2
+
+Prof. Tramontana - Ottobre 2024
+
+Programma
+
+Programma
+
+•
+
+Tecniche per sviluppare un sistema
+software distribuito o parallelo, di
+grandi dimensioni, che deve andare in
+produzione
+
+•
+
+Design Pattern [Fowler]: Remote
+Facade, Data Transfer Object,
+Session State, Serialized LOB,
+Gateway, Registry
+
+•
+
+Buone norme di progettazione di tali
+sistemi
+
+•
+
+Design Pattern per la sicurezza
+[Schumacher]: Access Control
+(Reference Monitor, Role-Based
+Access Control), Authenticator
+
+•
+
+Design Pattern [Gamma]: Proxy
+
+•
+
+Design Pattern [Buschmann]:
+Remote Proxy, Forwarder-Receiver,
+Broker
+3
+
+Prof. Tramontana - Ottobre 2024
+
+Prof. Tramontana - Ottobre 2024
+
+4
+
+Prof. Tramontana - Ottobre 2024
+
+Programma
+
+Programma
+
+•
+
+Time-Out, Latenze e Design Pattern
+Circuit Breaker e Bulkhead
+
+•
+
+Middleware orientato al MessagePassing, RabbitMQ
+
+•
+
+Java CompletableFuture per
+programmazione asincrona e timeout
+
+•
+
+•
+
+Aspect-Oriented Programming (AOP)
+
+Design pattern: event-driven
+consumer, competing consumers,
+publish-subscribe, message-filter
+
+5
+
+Programma
+•
+
+•
+
+•
+
+Architettura distribuita di una
+blockchain per il consenso e per la
+registrazione di transazioni
+Piattaforma Ethereum per la
+programmazione degli smart
+contract
+
+7
+
+6
+
+Prof. Tramontana - Ottobre 2024
+
+Prof. Tramontana - Ottobre 2024
+
+Prof. Tramontana - Ottobre 2024
+
+Libri Consigliati
+
+Le slide sono di supporto. Gli appunti presi a lezione, insieme alle slide
+potrebbero bastare
+•
+
+Buschmann, et al. Pattern-Oriented Software Architecture. A System of
+Patterns. Volume 1. Wiley, 1996
+
+•
+
+Fowler. Patterns of Enterprise Application Architecture. Addison-Wesley,
+2003
+
+•
+
+Gamma, et al. Design Patterns: Elements of Reusable Object-Oriented
+Software. Addison-Wesley, 1994
+
+•
+
+Hohpe, et al. Enterprise Integration Patterns. Addison-Wesley, 2003
+
+•
+
+Kuhn, et al. Reactive Design Patterns. Manning, 2017
+
+•
+
+Laddad. AspectJ in Action. Manning, 2nd ed, 2010
+
+•
+
+Schumacher, et al. Security Patterns. Wiley, 2006
+
+•
+
+Urma, et al. Java 8 in Action: Lambdas, streams, and functional-style
+programming. Manning, 2015
+
+•
+
+Videla, et al. RabbitMQ in Action. Manning,
+2012
+8
+
+Prof. Tramontana - Ottobre 2024
+
+Modalità Esami
+• Progetti individuali o per coppie + Orali
+• I Progetti saranno concordati, a partire da circa metà del corso
+• Si dovrà produrre
+• Relazione con: descrizione requisiti, diagrammi UML,
+
+dettagli di progettazione e implementazione
+• Codice applicazione e codice test
+• Valutazione
+• Uso di appropriate soluzioni architetturali (ovvero
+
+modularità e design pattern)
+• Chiarezza della documentazione
+9
+
+Prof. Tramontana - Ottobre 2024
+
+

@@ -1,0 +1,206 @@
+1
+
+Accesso Sicuro ai Servizi
+
+2
+
+Autenticazione Basata su Token
+
+▸ In un sistema distribuito le richieste ai servizi (lato server)
+devono essere vagliate: solo gli utenti autenticati e
+autorizzati posso usare i servizi
+
+1: login
+
+CLIENT
+
+▸ Bisogna far sì che ciascuna richiesta sia verificata e solo se
+autorizzata sia eseguita, tuttavia è necessario evitare di
+chiedere continuamente le credenziali agli utenti
+
+Rete
+
+2: store
+
+TOKEN
+STORE
+
+4: request(token)
+
+SERVIZIO
+
+▸ Inoltre bisogna far sì che la prova di identità e la verifica
+delle credenziali sia gestita in un solo server
+CLIENT
+
+AUTENTICAZIONE
+
+3: return token
+
+5: look up token
+
+SERVIZIO
+Prof. Tramontana - October 2025
+
+Prof. Tramontana - October 2025
+
+3
+
+4
+
+Token
+
+Generazione e Verifica di Token
+
+▸ Una volta autenticato l’utente, gli si fornisce un token che userà per le
+sue successive richieste ai servizi
+
+TestToken
+
+▸ Un token per l’accesso è una credenziale che può essere usata per
+accedere a servizi
+▸ Un token può essere una stringa (opaque, ovvero incomprensibile),
+per es. kPoPMRYrCEoYO6s5 oppure un oggetto, per es. un oggetto
+JSON, detto JSON Web Token (JWT)
+▸ Lo scopo del token è informare che chi lo possiede è stato autorizzato
+ad accedere al servizio
+▸ Il token tipicamente indica: l’utente identificato, chi lo ha emesso, il
+timestamp al momento dell’emissione, la durata, payload, una
+signature
+Prof. Tramontana - October 2025
+
+TokenGenerator
+
+TestToken
+M
+
+tGen:TokenGenerator
+
+tStore:TokenStore
+
+tokenBuild()
+TokenStore
+
+generatePayload()
+
+Token
+
+payload
+signIt()
+signat
+create
+
+t:Token
+
+t
+store(t)
+isValid(t.payload())
+isPresent(t)
+isValidSignature(t)
+verifySignature(t.signature(),t.payload)
+
+Prof. Tramontana - October 2025
+
+5
+
+6
+
+JSON Web Token (JWT)
+
+Claim Standard per JWT
+
+▸ I JWT (pronuncia jot) sono un formato standard per token di
+sicurezza auto-contenuti
+
+▸ Alcuni claim standard (RFC 7519) sono
+▸ Issuer: iss String, chi ha creato il token
+
+▸ Un JWT consiste di un set di diritti (claim) per un utente
+rappresentati tramite un oggetto JSON, insieme a un header
+(intestazione) che descrive il formato del token
+
+▸ Subject: sub String, l’identificativo univoco dell’utente
+▸ Audience: aud String o array, riceventi previsti per il token
+
+▸ I JWT sono protetti crittograficamente e possono essere
+criptati
+
+▸ Not before: nbf number, token non valido se usato prima di
+questo istante
+
+▸ L’oggetto JSON può contenere gli attributi della sessione;
+viene creato dal server, mandato al client, e successivamente
+quando il server lo riceve recupera gli attributi della sessione
+
+▸ Issued at: iat number, quando il token è stato creato
+▸ Expiration time: exp number, fine della validità del token
+▸ Id: jti String, identificativo del token
+
+Prof. Tramontana - October 2025
+
+Prof. Tramontana - October 2025
+
+7
+
+8
+
+Firma Crittografica del Token
+
+Libreria Auth0
+
+▸ Per evitare che chiunque crei il token o modifichi gli
+attributi del token, si aggiunge un campo calcolato in base
+a una chiave segreta
+
+▸ Una libreria molto usata per il supporto alla generazione e
+verifica dei token è auth0
+▸ Aggiungere al file di progetto (POM) maven la
+dipendenza
+<dependency>
+<groupId>com.auth0</groupId>
+<artifactId>java-jwt</artifactId>
+<version>4.5.0</version>
+</dependency>
+
+Prof. Tramontana - October 2025
+
+Prof. Tramontana - October 2025
+
+9
+
+10
+
+Creazione del Token
+
+Verifica del Token
+
+String token = JWT.create()
+.withIssuer(“auth0-my-demo")
+.withSubject(“my-user-123”)
+.withIssuedAt(new Date())
+.withExpiresAt(new Date(System.currentTimeMillis() + 3600_000))
+.withJWTId("token-xyz-123")
+.sign(algorithm);
+
+JWTVerifier verifier = JWT.require(algorithm)
+.withIssuer(“auth0-my-demo")
+.build();
+
+▸ Il token creato contiene l’id di chi lo ha prodotto, l’id
+dell’utente, la data di creazione, la data di scadenza, l’id
+del token, e quindi la firma crittografica
+
+▸ Il metodo verify() lancia una eccezione se il token non è
+valido
+
+DecodedJWT decoded = verifier.verify(token);
+System.out.println("Subject: " + decoded.getSubject());
+
+▸ Il metodo sign() prende una istanza che rappresenta
+l’algoritmo di crittografia per la firma e per la verifica
+Algorithm algorithm = Algorithm.RSA256(publicKey, privateKey);
+Prof. Tramontana - October 2025
+
+Prof. Tramontana - October 2025
+
+

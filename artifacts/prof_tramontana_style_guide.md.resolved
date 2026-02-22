@@ -1,0 +1,54 @@
+# Professor Tramontana's Design & Coding Style Guide
+
+Based on an analysis of the provided lecture slides for "Ingegneria dei Sistemi Distribuiti," here is a summary of Prof. Tramontana's architectural preferences and design patterns. We will adopt these principles to ensure our project aligns perfectly with his teachings.
+
+## 1. Core Architectural Principles
+The professor emphasizes building distributed systems that are resilient to the inherent unreliability of networks ("La rete è inaffidabile, lenta..."). 
+
+*   **Boundary Minimization:** Reduce the number of remote calls as much as possible because they are extremely slow compared to local calls (Slide L5: "20,000 ns vs 1 ns").
+*   **Coarse-Grained Interfaces:** When crossing network boundaries, interfaces must be "coarse-grained" (returning large, aggregated objects) rather than "fine-grained" (requiring multiple trips to get pieces of data).
+
+## 2. Key Design Patterns to Implement
+
+### A. Idempotent Receiver (Slide L11)
+*   **Problem:** The network is unstable. A client (Agent) sends a message but doesn't get the ACK, so it retries (At-least-once delivery). If the server isn't idempotent, it processes the message twice.
+*   **Prof's Solution:** 
+    1. The client generates a unique ID (e.g., via hash of the request data) and attaches it to the request.
+    2. The receiver saves this ID. If the exact same ID arrives again, the receiver safely ignores it.
+*   **Our Implementation:** The Agent will hash the raw NASA log line (`eventId`). The Core uses `raw_events.event_hash` to reject duplicates.
+
+### B. Remote Facade & DTO (Slide L5)
+*   **Problem:** Displaying a complex UI (like our Dashboard) requires data from multiple subsystems. Making 5 different REST calls from the frontend is inefficient and high-latency.
+*   **Prof's Solution:** Create a `Remote Facade` (a single coarse-grained API endpoint) that gathers all necessary data on the server-side, packs it into a single Data Transfer Object (DTO), and returns it in one network hop.
+*   **Our Implementation:** The `/api/dashboard/summary` endpoint returning DB health, MQ health, and recent alerts in one JSON block.
+
+### C. Request Batch (Slide L11)
+*   **Problem:** Making thousands of tiny requests (e.g., investigating thousands of IP addresses one by one) causes massive network overhead.
+*   **Prof's Solution:** Accumulate the requests into a single "Batch" payload. Send it over the network once. The server processes the batch and returns an aggregated list of responses.
+*   **Our Implementation:** The `/api/investigation/batch` endpoint accepting a JSON array of IPs.
+
+### D. Session State / Serialized LOB (Slide L6)
+*   *Note: Slides mention keeping the payload light across the network.*
+*   **Serialized LOB:** Instead of storing complex, nested historical data across 10 tables that require slow JOINs, serialize the entire aggregate into a single string/binary block (JSONB) and store it in one DB column for instant retrieval.
+*   **Our Implementation:** The `daily_reports` table saving JSON aggregates.
+
+### E. Asynchronous Messaging (Slide L16)
+*   **Problem:** Synchronous systems force the sender to wait. Different applications run at different speeds.
+*   **Prof's Solution:** Use a Message Broker to decouple systems. "Send and forget". The broker acts as a buffer (Leaky Bucket) so bursts of traffic from the sender do not overwhelm the receiver.
+*   **Our Implementation:** RabbitMQ sitting between the Agent and the PostgreSQL database.
+
+## 3. General "Tramontana" Coding Style (Extracted from Code Snippets)
+Based on a deep analysis of the Java code provided in the slides (Proxy, AOP, Messaging, etc.), here is exactly how the Professor writes code:
+
+1.  **Terse Variable Naming:** The most striking feature of his code is the use of extremely short, 1- or 2-letter variable names for object instances.
+    *   *Example:* `Subject s = new Proxy();` 
+    *   *Example:* `Book b = new Book();`
+    *   *Example:* `AuthrzRules ar = new AuthrzRules();`
+    *   *Rule:* We should adopt this terse naming convention (e.g., `RawEvent re`, `LogIngestionService lis`) in our local scope variables to match his style. Only Constants (e.g., `QUEUE_NAME`) are capitalized and fully spelled out.
+2.  **Compact Control Flow:** Single-line `if` statements almost *never* use curly braces `{}`. Returns or assignments happen on the same line or immediately after.
+    *   *Example:* `if (rs == null) rs = new RealSubject();`
+    *   *Example:* `if (r.canRead(b)) return b.getText();`
+3.  **Strict Encapsulation:** All instance variables are strictly `private`.
+    *   *Example:* `private List<String> rperm = new ArrayList<String>();`
+4.  **Logging:** In his examples, he relies heavily on `System.out.println(...)` rather than standard logging frameworks (SLF4J) to trace application flow. We will use proper logging (`@Slf4j`), but we can mimic his tracing output style (e.g., `log.info("Proxy: Read access has not been granted");`).
+5.  **Interface Declarations:** He leans heavily on "Programming to an Interface" (Liskov Substitution), declaring variables by their interface type (`Volume v = new Protection();`, `Subject s1 = new Proxy();`), except when testing concrete instantiations.

@@ -1,0 +1,33 @@
+# Sentinel Distributed SIEM - Task Tracker
+
+## [ ] Project Initialization
+- [ ] Setup Spring Boot project (Java 17, Spring Web, Data JPA, RabbitMQ, PostgreSQL)
+- [ ] Setup Docker Compose (`docker-compose.yml`) for RabbitMQ and PostgreSQL
+- [ ] Configure `application.properties`
+
+## [ ] Persistence & Domain Layer (Core)
+- [ ] Create `RawEvent` Entity and Repository (Idempotency with `event_hash`)
+- [ ] Create `Alert` Entity and Repository
+- [ ] Create `DailyReport` Entity (Serialized LOB pattern) and Repository
+- [ ] Create `UserSession` Entity for session state
+
+## [ ] Agent (Producer Layer)
+- [ ] Parse NASA KSC HTTP Log streaming
+- [ ] Implement Time-Shifted Replay algorithm
+- [ ] Generate SHA-256 hash for idempotency (`eventId`)
+- [ ] Publish to RabbitMQ asynchronous queue
+
+## [ ] Core & Analysis Engine (Processing Layer)
+- [ ] Implement `LogIngestionService` (RabbitMQ Listener, Idempotency check, DB Persist)
+- [ ] Implement `AnalysisEngine` (Sliding Window 60s, DOS and Brute Force detection)
+
+## [ ] API & Security Layer
+- [ ] Implement JWT Authentication & Filters
+- [ ] Implement `DashboardController` (Remote Facade Pattern)
+- [ ] Implement Batch Investigation API (Request Batch Pattern)
+- [ ] Implement Session Draft API (Session State Pattern)
+- [ ] Implement Daily Report Retrieval API with Resilience4j Circuit Breaker
+
+## [ ] Final Integration & Testing
+- [ ] Run End-to-End tests with the Agent feeding logs to the Core
+- [ ] Verify Dashboard metrics and Alerts generation
