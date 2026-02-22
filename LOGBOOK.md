@@ -59,8 +59,40 @@
 * **Description:** Executing the Agent via `./mvnw spring-boot:run` crashed repeatedly with `Web server failed to start. Port 8080 was already in use.`
 * **Solution:** Although the Agent is purely a background processing daemon and doesn't explicitly expose HTTP endpoints, `spring-boot-starter-web` spins up an embedded Tomcat server universally on 8080. Added `server.port=8081` to the Agent's application properties to circumvent local port exhaustions, and used `kill -9 $(lsof -t -i:8081)` to aggressively clear any zombie daemon locks holding the listener.
 
-**Problem 3: Missing Queues and Incomplete AMQP Imports**
-* **Description:** After pushing events to the RabbitMQ broker, the Management UI revealed 0 ingress. Testing manually with `curl` returned `Object Not Found`. The `RabbitTemplate` was routing messages into the void because the broker had no matching Queue topology.
-* **Solution:** Modified `RabbitMQConfig.java` to explicitly declare static `@Bean` components for the `Queue` and a `BindingBuilder` so Spring AMQP forces RabbitMQ to instantiate the `logs.ingress.key` persistent queue upon application connection. Fixed resulting Java import statement compiler errors.
+---
+*(End of Entry)*
+
+## 📅 Log Entry: Phase 3 - Core Module Ingestion & Persistence
+**Date:** 22 February 2026
+**Phase:** 3
+
+### 🎯 What Was Made
+1. **EventConsumerService:** Implemented the RabbitMQ listener to pull events from the `logs.ingress.key` queue.
+2. **Idempotency Execution:** Integrated the `HashUtils.calculateEventHash(dto)` method. The resulting hash is mapped to the `raw_events` table `eventHash` column which has a unique constraint, cleanly discarding any duplicate messages thrown by the Agent.
+3. **Severity Classification Engine:** Added logic to tag events dynamically:
+   - CRITICAL: Detects path traversal or malicious endpoints (`/etc/passwd`, `cmd.exe`).
+   - WARNING: Flags HTTP 400 and 500 status codes.
+   - INFO: Baseline traffic.
+
+### ⚠️ Problems Met & 🛠️ Solutions Applied
+**Problem 1: Missing Queue Defaults cause Crash**
+* **Description:** The `sentinel-core` module crashed on startup if the `sentinel-agent` hadn't booted first, because the Core module expected the `logs.ingress.key` queue to already exist on the RabbitMQ broker.
+* **Solution:** Moved the `Queue`, `DirectExchange`, and `Binding` `@Bean` definitions into the Core's `RabbitMQConfig` as well. Both the Agent and Core now independently declare the queue using `durable=true`, ensuring whichever module starts first brings the messaging infrastructure online safely.
 
 ---
+*(End of Entry)*
+
+## 📅 Log Entry: Phase 4 - Real-Time Analytics & Design Pattern Mapping
+**Date:** 22 February 2026
+**Phase:** 4
+
+### 🎯 What Was Made
+1. **Design Pattern Documentation:** Created `DESIGN_PATTERNS.md` to officially explicitly track how Professor Tramontana's architectural concepts (Messaging, Idempotent Receiver, CompletableFuture, Resilience) are actively used in the codebase.
+2. **Volumetric Threat Detection:** Built the `AnalyticsService` completely around the **Resilience4J `RateLimiter`** component (Design Pattern 2.6).
+   - Created a unique Rate Limiter for every incoming IP.
+   - Specifically configured a `limitForPeriod(100)` over `limitRefreshPeriod(60s)` for Denial of Service tracking.
+   - Created a secondary Rate Limiter specifically filtering `401/403` status codes for Brute Force tracking (`10` failures / `60s`).
+3. **Alert Persistence:** Created the `Alert` JPA Entity and `AlertRepository`. If the Rate Limiter acquires permission fails (`acquirePermission() == false`), it generates a permanent security Alert in the PostgreSQL database.
+4. **Asynchronous Non-Blocking Execution:** Integrated the analytics engine into the `EventConsumerService` using `CompletableFuture.runAsync()` (Pattern 2.5). This guarantees the heavy analytical limiters run on a background thread pool, leaving the main AMQP thread free to drain the RabbitMQ ingress queue without latency spikes.
+5. **Verified Integrity:** Pushed thousands of simulated events through the running Agent and successfully verified the creation of a `DOS_ATTACK` record in local PSQL.
+6. **Git History Scrubbing:** Encountered a fatal push error due to the 160MB Agent log files being tracked in `.git` history. Erased them globally using `git filter-branch` to repair the push tree and successfully synchronized with the `main` branch.
