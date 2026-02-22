@@ -13,7 +13,6 @@
 - [ ] REQ-SEC-02: Session State Server-Side (`/api/draft`)
 
 ## 🏃🏽‍♂️ To Do (Next Up)
-- [ ] REQ-API-01: Remote Facade (`/api/dashboard/summary`)
 
 ## 🚧 In Progress
 
@@ -26,3 +25,7 @@
 - [x] REQ-CORE-01..03: Implement Core module (Ingestion, Idempotency, Severity)
 - [x] REQ-AN-01..03: Core Analytics (Sliding Window, DOS, Brute Force)
 - [x] Define architecture based on Professor's design patterns (`DESIGN_PATTERNS.md`)
+- [x] REQ-API-01: Remote Facade (`/api/dashboard/summary`)
+- [x] REQ-API-02: Request Batch (`/api/investigation/batch`)
+- [x] REQ-API-03: Serialized LOB (Daily statistics aggregation job)
+- [x] REQ-API-04: Circuit Breaker (Protect `daily_reports` queries)

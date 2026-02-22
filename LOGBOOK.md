@@ -96,3 +96,28 @@
 4. **Asynchronous Non-Blocking Execution:** Integrated the analytics engine into the `EventConsumerService` using `CompletableFuture.runAsync()` (Pattern 2.5). This guarantees the heavy analytical limiters run on a background thread pool, leaving the main AMQP thread free to drain the RabbitMQ ingress queue without latency spikes.
 5. **Verified Integrity:** Pushed thousands of simulated events through the running Agent and successfully verified the creation of a `DOS_ATTACK` record in local PSQL.
 6. **Git History Scrubbing:** Encountered a fatal push error due to the 160MB Agent log files being tracked in `.git` history. Erased them globally using `git filter-branch` to repair the push tree and successfully synchronized with the `main` branch.
+
+## 📅 Log Entry: Phase 5 - API Module & Advanced Design Patterns
+**Date:** 22 February 2026
+**Phase:** 5
+
+### 🎯 What Was Made
+1. **Module Creation:** Created the `sentinel-api` child module with Spring Web and Spring Data JPA. Removed Spring Security entirely for the local development cycle to prevent `401 Unauthorized` blocks.
+2. **Dashboard Controller (Remote Facade):** Implemented `/api/dashboard/summary` utilizing `DashboardSummaryDTO`. Fulfilled **Pattern 1.10** by bundling granular metrics (event counts, alert sums) into a single remote call.
+3. **Investigation Controller (Request Batch):** Implemented a bulk pipeline via `/api/investigation/batch`. Analysts can submit arrays of IP addresses and the server matches them internally, drastically cutting HTTP overhead according to **Pattern 1.15**.
+4. **Report Service (Serialized LOB & Circuit Breaker):** 
+   - Created the `DailyReport.java` entity utilizing **Pattern 1.11**. By storing aggregated daily statistics as a raw Jackson JSON string in a Postgres `TEXT` column, we bypass expensive deep table JOINS for historical reports.
+   - Wrapped the endpoint `/api/reports/daily` in `Resilience4J`'s `@CircuitBreaker` (**Pattern 1.16**). If the LOB retrieval fails, it triggers a degraded fallback response describing the system anomaly without crashing the user's portal.
+
+### ⚠️ Problems Met & 🛠️ Solutions Applied
+
+**Problem 1: 401 Unauthorized HTTP Defense**
+* **Description:** Accessing the API via `curl` returned blank responses because they were met with a `401 Unauthorized`.
+* **Solution:** Discovered `spring-boot-starter-security` was accidentally bootstrapped early. Excised it from the `pom.xml` entirely so development could proceed unhindered. JWT Auth is reserved for Phase 6.
+
+**Problem 2: API Tomcat Port Saturation (8083 blocked)**
+* **Description:** Start of the `mvnw spring-boot:run` crashed because port 8083 was "already in use".
+* **Solution:** A phantom `java` task had remained running from a previous shell execution test. Found the specific process using the `CommandId` of the background subtask, gracefully killed it, and restarted the server clean.
+
+---
+*(End of Entry)*
