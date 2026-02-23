@@ -9,8 +9,7 @@
 - [ ] REQ-API-04: Circuit Breaker (Protect `daily_reports` queries)
 
 **Security**
-- [ ] REQ-SEC-01: JWT Authentication for APIs
-- [ ] REQ-SEC-02: Session State Server-Side (`/api/draft`)
+- [ ] REQ-SEC-03: JWT Key Rotation (Future Update)
 
 ## 🏃🏽‍♂️ To Do (Next Up)
 
@@ -29,3 +28,5 @@
 - [x] REQ-API-02: Request Batch (`/api/investigation/batch`)
 - [x] REQ-API-03: Serialized LOB (Daily statistics aggregation job)
 - [x] REQ-API-04: Circuit Breaker (Protect `daily_reports` queries)
+- [x] REQ-SEC-01: JWT Authentication for APIs
+- [x] REQ-SEC-02: Session State Server-Side (`/api/draft`)

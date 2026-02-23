@@ -121,3 +121,14 @@
 
 ---
 *(End of Entry)*
+
+## 📅 Log Entry: Phase 6 - Security & Authentication (JWT & Session State)
+**Date:** 23 February 2026
+**Phase:** 6
+
+### 🎯 What Was Made
+1. **JWT Architecture (REQ-SEC-01):** Implemented stateless `JwtAuthenticationFilter` using `java-jwt` and Spring Security. The filter enforces that all `/api/**` endpoints require a valid Bearer token signed with HMAC-SHA256. 
+2. **Operational Security Override:** Overrode the default Spring Security handlers to return `403 Forbidden` across the board (even for `401 Unauthorized` scenarios) as requested, maximizing operational security against reconnaissance.
+3. **Best-Practice Secret Injection:** Refactored the signature key to be injected via Environment Variables (`${JWT_SECRET}`) in `application.properties`, ensuring the 256-bit cryptographic material is never embedded natively in the Git history. 
+4. **UUID Generation:** Utilized standard `Java UUID` generation securely attached to the JWT payload `sub` (subject), rather than sequential predictable integers.
+5. **Server-Side Session State (PATTERN 1.11 / REQ-SEC-02):** Implemented `/api/draft` utilizing a central `DraftState` JPA Entity. To mitigate security payload bloating, user session data (draft reports) is saved directly into PostgreSQL, keyed anonymously by the UUID extracted purely from the JWT, fulfilling the "Session State Server-Side" pattern precisely.
