@@ -132,3 +132,10 @@
 3. **Best-Practice Secret Injection:** Refactored the signature key to be injected via Environment Variables (`${JWT_SECRET}`) in `application.properties`, ensuring the 256-bit cryptographic material is never embedded natively in the Git history. 
 4. **UUID Generation:** Utilized standard `Java UUID` generation securely attached to the JWT payload `sub` (subject), rather than sequential predictable integers.
 5. **Server-Side Session State (PATTERN 1.11 / REQ-SEC-02):** Implemented `/api/draft` utilizing a central `DraftState` JPA Entity. To mitigate security payload bloating, user session data (draft reports) is saved directly into PostgreSQL, keyed anonymously by the UUID extracted purely from the JWT, fulfilling the "Session State Server-Side" pattern precisely.
+
+## 📅 Log Entry: Final Review & Missing Analytics
+**Date:** 23 February 2026
+
+### 🎯 What Was Made
+1. **Analisi Completa:** Rivedendo `Software Design Document.md` e `Specifica Requisiti Software.md`, è emersa una discrepanza tra il `REQ-CORE-02` (Classificazione Severity `CRITICAL` via Path Traversal/Cmd Injection) e lo schema reale delle Allerte in tabella.
+2. **PATTERN_MATCH Alert:** La `AnalyticsService` generava solo `DOS_ATTACK` e `BRUTE_FORCE`. È stato implementato il metodo `checkPatternMatch` che legge la gravità `CRITICAL` assegnata dall'Idempotency filter nell'`EventConsumerService` e trasforma questa classificazione in un allarme `PATTERN_MATCH` persistente nel database, chiudendo l'ultimo gap nei requisiti funzionali previsti.
