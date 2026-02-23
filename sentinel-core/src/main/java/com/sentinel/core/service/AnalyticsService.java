@@ -45,7 +45,8 @@ public class AnalyticsService {
                 .timeoutDuration(Duration.ZERO)
                 .build();
 
-        this.rateLimiterRegistry = RateLimiterRegistry.of(dosConfig);
+        this.rateLimiterRegistry = RateLimiterRegistry.ofDefaults();
+        this.rateLimiterRegistry.addConfiguration("dos", dosConfig);
         this.rateLimiterRegistry.addConfiguration("brute-force", bruteForceConfig);
     }
 
@@ -60,7 +61,7 @@ public class AnalyticsService {
     }
 
     private void checkDos(String sourceIp) {
-        RateLimiter dosLimiter = rateLimiterRegistry.rateLimiter("dos-" + sourceIp);
+        RateLimiter dosLimiter = rateLimiterRegistry.rateLimiter("dos-" + sourceIp, "dos");
 
         // tryAcquire() returns false if the limit (100 req/min) has been reached
         if (!dosLimiter.acquirePermission()) {
@@ -80,6 +81,7 @@ public class AnalyticsService {
         // Assume failure if status code is 401 or 403
         if (event.getStatusCode() == 401 || event.getStatusCode() == 403) {
             String sourceIp = event.getSourceIp();
+            log.info("Checking Brute Force for IP: {} with status {}", sourceIp, event.getStatusCode());
             RateLimiter bruteForceLimiter = rateLimiterRegistry.rateLimiter("bf-" + sourceIp, "brute-force");
 
             // tryAcquire() returns false if the limit (10 failures/min) has been reached
