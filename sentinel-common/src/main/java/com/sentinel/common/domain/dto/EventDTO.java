@@ -11,12 +11,13 @@ public class EventDTO {
     private String endpoint;
     private Integer statusCode;
     private Long bytes;
+    private String severity;
 
     public EventDTO() {
     }
 
     public EventDTO(String eventId, String sourceIp, LocalDateTime timestamp, String method, String endpoint,
-            Integer statusCode, Long bytes) {
+            Integer statusCode, Long bytes, String severity) {
         this.eventId = eventId;
         this.sourceIp = sourceIp;
         this.timestamp = timestamp;
@@ -24,6 +25,7 @@ public class EventDTO {
         this.endpoint = endpoint;
         this.statusCode = statusCode;
         this.bytes = bytes;
+        this.severity = severity;
     }
 
     public String getEventId() {
@@ -82,6 +84,14 @@ public class EventDTO {
         this.bytes = bytes;
     }
 
+    public String getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(String severity) {
+        this.severity = severity;
+    }
+
     public static builder builder() {
         return new builder();
     }
@@ -94,6 +104,7 @@ public class EventDTO {
         private String endpoint;
         private Integer statusCode;
         private Long bytes;
+        private String severity;
 
         public builder eventId(String eventId) {
             this.eventId = eventId;
@@ -130,8 +141,13 @@ public class EventDTO {
             return this;
         }
 
+        public builder severity(String severity) {
+            this.severity = severity;
+            return this;
+        }
+
         public EventDTO build() {
-            return new EventDTO(eventId, sourceIp, timestamp, method, endpoint, statusCode, bytes);
+            return new EventDTO(eventId, sourceIp, timestamp, method, endpoint, statusCode, bytes, severity);
         }
     }
 }

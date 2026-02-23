@@ -25,6 +25,7 @@ public class AnalyticsService {
     // Track state to avoid spamming the same alert for the same IP continuously
     private final ConcurrentMap<String, Long> lastDosAlertTime = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Long> lastBruteForceAlertTime = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Long> lastPatternMatchAlertTime = new ConcurrentHashMap<>();
 
     private static final long ALERT_COOLDOWN_MS = 60000; // 1 minute cooldown per IP per alert type
 
@@ -58,6 +59,7 @@ public class AnalyticsService {
 
         checkDos(sourceIp);
         checkBruteForce(event);
+        checkPatternMatch(event, sourceIp);
     }
 
     private void checkDos(String sourceIp) {
@@ -94,6 +96,20 @@ public class AnalyticsService {
                     createAlert("BRUTE_FORCE", sourceIp, "Failed authentication > 10 times in 1 minute.");
                     lastBruteForceAlertTime.put(sourceIp, now);
                 }
+            }
+        }
+    }
+
+    private void checkPatternMatch(EventDTO event, String sourceIp) {
+        if ("CRITICAL".equalsIgnoreCase(event.getSeverity())) {
+            long now = System.currentTimeMillis();
+            long lastAlert = lastPatternMatchAlertTime.getOrDefault(sourceIp, 0L);
+
+            if (now - lastAlert > ALERT_COOLDOWN_MS) {
+                log.warn("🚨 PATTERN MATCH (MALICIOUS PAYLOAD) DETECTED from IP: {}", sourceIp);
+                createAlert("PATTERN_MATCH", sourceIp,
+                        "Malicious path/command injection detected: " + event.getEndpoint());
+                lastPatternMatchAlertTime.put(sourceIp, now);
             }
         }
     }

@@ -46,7 +46,9 @@ public class EventConsumerService {
             // doesn't have them based on the current schema in common module
 
             // 3. Severity Classification Rule Engine
-            event.setSeverity(classifySeverity(dto));
+            String severity = classifySeverity(dto);
+            event.setSeverity(severity);
+            dto.setSeverity(severity); // Attach it to DTO for the AnalyticsService
 
             // 4. Persist to PostgreSQL (Idempotency enforced by DB constraints)
             repository.save(event);
