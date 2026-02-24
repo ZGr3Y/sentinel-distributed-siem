@@ -4,16 +4,21 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Pattern: Session State Server-Side (L6_SessionStateSLOB)
+ * Persists user work-in-progress (draft) data to the database,
+ * keyed by the user's ID extracted from the JWT token.
+ */
 @Entity
 @Table(name = "draft_states")
 public class DraftState {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @Column(name = "id", nullable = false, updatable = false)
+    private String id;
 
-    @Column(nullable = false, unique = true)
-    private UUID userId;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private String userId;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String draftPayload;
@@ -22,27 +27,25 @@ public class DraftState {
     private LocalDateTime updatedAt;
 
     public DraftState() {
+        this.id = UUID.randomUUID().toString();
     }
 
-    public DraftState(UUID userId, String draftPayload) {
+    public DraftState(String userId, String draftPayload) {
+        this();
         this.userId = userId;
         this.draftPayload = draftPayload;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public UUID getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

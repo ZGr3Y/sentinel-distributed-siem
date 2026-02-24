@@ -6,8 +6,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
+/**
+ * Pattern: Session State Server-Side (L6_SessionStateSLOB)
+ * Manages persisting and retrieving user drafts from the database.
+ */
 @Service
 public class SessionStateService {
 
@@ -17,7 +20,7 @@ public class SessionStateService {
         this.repository = repository;
     }
 
-    public DraftState saveDraft(UUID userId, String payload) {
+    public DraftState saveDraft(String userId, String payload) {
         Optional<DraftState> existing = repository.findByUserId(userId);
         if (existing.isPresent()) {
             DraftState state = existing.get();
@@ -30,7 +33,7 @@ public class SessionStateService {
         }
     }
 
-    public Optional<DraftState> getDraft(UUID userId) {
+    public Optional<DraftState> getDraft(String userId) {
         return repository.findByUserId(userId);
     }
 }

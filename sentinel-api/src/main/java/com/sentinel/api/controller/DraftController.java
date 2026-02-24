@@ -9,9 +9,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
-import java.util.UUID;
 import java.util.Map;
 
+/**
+ * Pattern: Session State Server-Side (L6_SessionStateSLOB)
+ * Persists user work-in-progress to the database, keyed by userId extracted
+ * from the JWT.
+ * The session data is NOT stored in the token itself (REQ-SEC-02).
+ */
 @RestController
 @RequestMapping("/api/draft")
 public class DraftController {
@@ -24,14 +29,14 @@ public class DraftController {
 
     @PostMapping
     public ResponseEntity<?> saveDraft(@RequestBody DraftSaveRequest request) {
-        UUID userId = getUserIdFromContext();
+        String userId = getUserIdFromContext();
         DraftState draft = sessionStateService.saveDraft(userId, request.getPayload());
         return ResponseEntity.ok(draft);
     }
 
     @GetMapping
     public ResponseEntity<?> getDraft() {
-        UUID userId = getUserIdFromContext();
+        String userId = getUserIdFromContext();
         Optional<DraftState> draft = sessionStateService.getDraft(userId);
 
         if (draft.isPresent()) {
@@ -41,8 +46,10 @@ public class DraftController {
         }
     }
 
-    private UUID getUserIdFromContext() {
+    private String getUserIdFromContext() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return (UUID) auth.getPrincipal(); // Assuming principal is UUID based on JwtAuthenticationFilter
+        // Principal is the userId String (set by JwtAuthenticationFilter from JWT
+        // subject)
+        return (String) auth.getPrincipal();
     }
 }
