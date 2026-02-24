@@ -15,4 +15,6 @@ public interface AlertRepository extends JpaRepository<Alert, String> {
     long countByAlertType(@Param("alertType") String alertType);
 
     List<Alert> findBySourceIp(String sourceIp);
+
+    List<Alert> findTop10ByOrderByCreatedAtDesc();
 }
