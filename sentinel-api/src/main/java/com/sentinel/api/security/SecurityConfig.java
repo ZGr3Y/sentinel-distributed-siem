@@ -15,6 +15,16 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+/**
+ * Pattern: Reference Monitor (L2_ReferenceMonitor)
+ * Pattern: RBAC (L3_RoleBasedAC)
+ *
+ * Configures the security pipeline as mandated by Prof. Tramontana:
+ * GUI → RATE-LIMITER → AUTHENTICATOR → ACCESS CONTROL → SERVICE
+ *
+ * The RateLimiterFilter runs first (Order 1), then JwtAuthenticationFilter,
+ * and finally SecurityConfig enforces role-based authorization rules.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -34,14 +44,18 @@ public class SecurityConfig {
                                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                                 .exceptionHandling(exceptions -> exceptions
                                                 .authenticationEntryPoint((request, response, authException) -> response
-                                                                .sendError(HttpServletResponse.SC_FORBIDDEN,
-                                                                                "Forbidden"))
+                                                                .sendError(HttpServletResponse.SC_UNAUTHORIZED,
+                                                                                "Unauthorized"))
                                                 .accessDeniedHandler(
                                                                 (request, response, accessDeniedException) -> response
                                                                                 .sendError(HttpServletResponse.SC_FORBIDDEN,
                                                                                                 "Forbidden")))
                                 .authorizeHttpRequests(auth -> auth
+                                                // Public endpoints
                                                 .requestMatchers("/auth/login").permitAll()
+                                                // RBAC: ADMIN-only endpoints
+                                                .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                                                // All other API endpoints require authentication (any role)
                                                 .requestMatchers("/api/**").authenticated()
                                                 .anyRequest().permitAll())
                                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -52,14 +66,11 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                // Whitelist the exact Vite default development port
                 configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
-                // Allow credentials if your token/cookie strategy ever expands
                 configuration.setAllowCredentials(true);
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                // Apply this completely to the entire API namespace
                 source.registerCorsConfiguration("/**", configuration);
                 return source;
         }
