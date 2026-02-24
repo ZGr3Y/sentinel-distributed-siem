@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
+import type { ReactNode, FC } from 'react';
 import { api } from '../services/api';
 
 interface AuthContextType {
@@ -13,12 +13,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('sentinel_jwt'));
     const [userId, setUserId] = useState<string | null>(localStorage.getItem('sentinel_userId'));
     const [isLoading, setIsLoading] = useState(false);
 
-    // If token changes natively (or across tabs), sync it.
     useEffect(() => {
         if (token) {
             localStorage.setItem('sentinel_jwt', token);

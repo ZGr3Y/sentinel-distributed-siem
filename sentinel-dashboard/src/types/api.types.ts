@@ -1,3 +1,12 @@
+// Matches DashboardSummaryDTO.java exactly
+export interface DashboardSummary {
+    totalEvents: number;
+    totalAlerts: number;
+    dosAttacks: number;
+    bruteForceAttacks: number;
+}
+
+// Matches Alert.java entity
 export interface Alert {
     id: string;
     type: string;
@@ -6,18 +15,16 @@ export interface Alert {
     createdAt: string;
 }
 
-export interface SystemHealth {
-    database: string;
-    broker: string;
+// Matches BatchQueryResponse.java
+export interface BatchQueryResponse {
+    ipAlertsMap: Record<string, Alert[]>;
+    totalIpsQueried: number;
 }
 
-export interface Metrics {
-    totalEventsLast10Min: number;
-    eventsPerSecond: number;
-}
-
-export interface DashboardSummary {
-    systemHealth: SystemHealth;
-    metrics: Metrics;
-    latestAlerts: Alert[];
+// Matches DraftState.java entity
+export interface DraftState {
+    id: string;
+    userId: string;
+    draftPayload: string;
+    updatedAt: string;
 }

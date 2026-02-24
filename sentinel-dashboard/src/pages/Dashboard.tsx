@@ -1,141 +1,133 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import type { DashboardSummary } from '../types/api.types';
-import { Activity, Database, Server, AlertTriangle } from 'lucide-react';
+import { Database, AlertTriangle, ShieldAlert, Skull, Bug } from 'lucide-react';
 
 export const Dashboard = () => {
     const [data, setData] = useState<DashboardSummary | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await api.get<DashboardSummary>('/api/dashboard/summary');
                 setData(response.data);
-            } catch (error) {
-                console.error('Failed to fetch dashboard data', error);
+                setError(null);
+            } catch (err) {
+                console.error('Failed to fetch dashboard data', err);
+                setError('Failed to connect to Sentinel API. Is the backend running on port 8083?');
             } finally {
                 setLoading(false);
             }
         };
 
         fetchData();
-        // Poll every 5 seconds for real-time vibe
         const intervalId = setInterval(fetchData, 5000);
         return () => clearInterval(intervalId);
     }, []);
 
     if (loading && !data) {
         return (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-64">
                 <div className="w-8 h-8 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin" />
             </div>
         );
     }
 
-    if (!data) return <div className="text-red-400">Failed to load Dashboard Metrics.</div>;
+    if (error && !data) {
+        return (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-red-400">
+                <p className="font-bold mb-1">Connection Error</p>
+                <p className="text-sm">{error}</p>
+            </div>
+        );
+    }
+
+    if (!data) return null;
+
+    const cards = [
+        {
+            label: 'Total Events',
+            value: data.totalEvents.toLocaleString(),
+            icon: Database,
+            color: 'text-blue-400',
+        },
+        {
+            label: 'Total Alerts',
+            value: data.totalAlerts.toLocaleString(),
+            icon: AlertTriangle,
+            color: 'text-yellow-400',
+        },
+        {
+            label: 'DOS Attacks',
+            value: data.dosAttacks.toLocaleString(),
+            icon: ShieldAlert,
+            color: 'text-orange-400',
+        },
+        {
+            label: 'Brute Force',
+            value: data.bruteForceAttacks.toLocaleString(),
+            icon: Skull,
+            color: 'text-red-400',
+        },
+    ];
 
     return (
         <div className="space-y-6">
             <div>
                 <h2 className="text-2xl font-bold text-white tracking-wide">SYSTEM OVERVIEW</h2>
-                <p className="text-gray-400 text-sm">Real-time statistics and active security alerts.</p>
+                <p className="text-gray-400 text-sm">Real-time statistics from the Sentinel Distributed SIEM. Auto-refreshes every 5 seconds.</p>
             </div>
 
-            {/* Top Metrics Row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* DB Health */}
-                <div className="bg-dark-card border border-dark-border p-4 rounded-xl shadow-lg flex items-center justify-between group hover:border-primary-500/50 transition-colors">
-                    <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">PostgreSQL DB</p>
-                        <div className="flex items-center space-x-2">
-                            <span className="text-xl font-bold text-white">{data.systemHealth.database}</span>
-                            <span className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${data.systemHealth.database === 'UP' ? 'bg-green-500 shadow-green-500/50' : 'bg-red-500 shadow-red-500/50'}`} />
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {cards.map((card) => (
+                    <div
+                        key={card.label}
+                        className="bg-dark-card border border-dark-border p-5 rounded-xl shadow-lg flex items-center justify-between group hover:border-primary-500/50 transition-colors"
+                    >
+                        <div>
+                            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">{card.label}</p>
+                            <span className="text-3xl font-bold text-white">{card.value}</span>
                         </div>
+                        <card.icon className={`w-10 h-10 ${card.color} opacity-40 group-hover:opacity-80 transition-opacity`} />
                     </div>
-                    <Database className="w-8 h-8 text-gray-600 group-hover:text-primary-400 transition-colors" />
-                </div>
-
-                {/* Broker Health */}
-                <div className="bg-dark-card border border-dark-border p-4 rounded-xl shadow-lg flex items-center justify-between group hover:border-primary-500/50 transition-colors">
-                    <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">RabbitMQ Broker</p>
-                        <div className="flex items-center space-x-2">
-                            <span className="text-xl font-bold text-white">{data.systemHealth.broker}</span>
-                            <span className={`w-3 h-3 rounded-full shadow-[0_0_10px] ${data.systemHealth.broker === 'UP' ? 'bg-green-500 shadow-green-500/50' : 'bg-red-500 shadow-red-500/50'}`} />
-                        </div>
-                    </div>
-                    <Server className="w-8 h-8 text-gray-600 group-hover:text-primary-400 transition-colors" />
-                </div>
-
-                {/* Total Events */}
-                <div className="bg-dark-card border border-dark-border p-4 rounded-xl shadow-lg flex items-center justify-between group hover:border-primary-500/50 transition-colors">
-                    <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">Events (10m)</p>
-                        <span className="text-2xl font-bold text-white">{data.metrics.totalEventsLast10Min.toLocaleString()}</span>
-                    </div>
-                    <Activity className="w-8 h-8 text-gray-600 group-hover:text-primary-400 transition-colors" />
-                </div>
-
-                {/* Rate */}
-                <div className="bg-dark-card border border-dark-border p-4 rounded-xl shadow-lg flex items-center justify-between group hover:border-primary-500/50 transition-colors">
-                    <div>
-                        <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider mb-1">Ingestion Rate</p>
-                        <span className="text-2xl font-bold text-white">{data.metrics.eventsPerSecond.toFixed(1)} /s</span>
-                    </div>
-                    <Activity className="w-8 h-8 text-gray-600 group-hover:text-primary-400 transition-colors" />
-                </div>
+                ))}
             </div>
 
-            {/* Alerts Table */}
-            <div className="bg-dark-card border border-dark-border rounded-xl shadow-lg overflow-hidden">
-                <div className="p-4 border-b border-dark-border flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                    <h3 className="text-lg font-semibold text-white">Active Threat Feed</h3>
+            {/* System Status */}
+            <div className="bg-dark-card border border-dark-border rounded-xl shadow-lg p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                    <Bug className="w-5 h-5 text-primary-500" />
+                    <h3 className="text-lg font-semibold text-white">Threat Distribution</h3>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-300">
-                        <thead className="bg-dark-bg/50 text-gray-400 uppercase text-xs">
-                            <tr>
-                                <th className="px-6 py-3 font-medium tracking-wider">Time</th>
-                                <th className="px-6 py-3 font-medium tracking-wider">Type</th>
-                                <th className="px-6 py-3 font-medium tracking-wider">Source IP</th>
-                                <th className="px-6 py-3 font-medium tracking-wider">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-dark-border">
-                            {data.latestAlerts.map((alert) => (
-                                <tr key={alert.id} className="hover:bg-dark-bg/30 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-xs">
-                                        {new Date(alert.createdAt).toLocaleTimeString()}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full ${alert.type === 'DOS_ATTACK' ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20' :
-                                            alert.type === 'BRUTE_FORCE' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                                'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                                            }`}>
-                                            {alert.type}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap font-mono text-primary-400">
-                                        {alert.sourceIp}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {alert.description}
-                                    </td>
-                                </tr>
-                            ))}
+                <div className="space-y-3">
+                    {data.totalAlerts > 0 ? (
+                        <>
+                            <ThreatBar label="DOS Attacks" count={data.dosAttacks} total={data.totalAlerts} color="bg-orange-500" />
+                            <ThreatBar label="Brute Force" count={data.bruteForceAttacks} total={data.totalAlerts} color="bg-red-500" />
+                            <ThreatBar label="Other / Pattern Match" count={data.totalAlerts - data.dosAttacks - data.bruteForceAttacks} total={data.totalAlerts} color="bg-purple-500" />
+                        </>
+                    ) : (
+                        <p className="text-gray-500 text-sm">No threats detected yet. Run the Sentinel Agent to start ingesting events.</p>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
 
-                            {data.latestAlerts.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                                        No active threats detected in the current window.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+const ThreatBar = ({ label, count, total, color }: { label: string; count: number; total: number; color: string }) => {
+    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+    return (
+        <div>
+            <div className="flex justify-between text-sm mb-1">
+                <span className="text-gray-300">{label}</span>
+                <span className="text-gray-400 font-mono">{count.toLocaleString()} ({pct}%)</span>
+            </div>
+            <div className="w-full bg-dark-border rounded-full h-2">
+                <div className={`${color} h-2 rounded-full transition-all duration-500`} style={{ width: `${pct}%` }} />
             </div>
         </div>
     );
