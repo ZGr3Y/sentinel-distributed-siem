@@ -1,13 +1,21 @@
+import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Lock } from 'lucide-react';
+import { Shield, Lock, User, KeyRound } from 'lucide-react';
 
 export const Login = () => {
-    const { login, isAuthenticated, isLoading } = useAuth();
+    const { login, isAuthenticated, isLoading, error } = useAuth();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
 
     if (isAuthenticated) {
         return <Navigate to="/" replace />;
     }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await login(username, password);
+    };
 
     return (
         <div className="min-h-screen bg-dark-bg flex items-center justify-center p-4">
@@ -22,30 +30,64 @@ export const Login = () => {
                     </div>
 
                     <h1 className="text-3xl font-bold text-white mb-2 tracking-wide">SENTINEL</h1>
-                    <p className="text-gray-400 mb-8 text-center">Distributed Security Information & Event Management</p>
+                    <p className="text-gray-400 mb-6 text-center">Distributed Security Information & Event Management</p>
 
-                    <button
-                        onClick={login}
-                        disabled={isLoading}
-                        className="w-full relative group bg-primary-600 hover:bg-primary-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {/* Button Glitch Effect Overlay */}
-                        <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-shimmer" />
-
-                        <div className="flex items-center justify-center space-x-2 relative z-10">
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <Lock className="w-5 h-5" />
-                                    <span>Authenticate Securely</span>
-                                </>
-                            )}
+                    <form onSubmit={handleSubmit} className="w-full space-y-4">
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                            <input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Username"
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                autoComplete="username"
+                                required
+                            />
                         </div>
-                    </button>
+
+                        <div className="relative">
+                            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                            <input
+                                id="password"
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Password"
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg py-3 pl-11 pr-4 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                                autoComplete="current-password"
+                                required
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm text-center">
+                                {error}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full relative group bg-primary-600 hover:bg-primary-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-shimmer" />
+                            <div className="flex items-center justify-center space-x-2 relative z-10">
+                                {isLoading ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                ) : (
+                                    <>
+                                        <Lock className="w-5 h-5" />
+                                        <span>Authenticate Securely</span>
+                                    </>
+                                )}
+                            </div>
+                        </button>
+                    </form>
 
                     <p className="mt-6 text-xs text-center text-gray-500">
-                        Node: SENTINEL-CORE-1<br />
+                        Default credentials: admin/admin or analyst/analyst<br />
                         Access requires valid JWT Authorization.
                     </p>
                 </div>
