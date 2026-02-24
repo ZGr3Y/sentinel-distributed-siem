@@ -139,3 +139,15 @@
 ### 🎯 What Was Made
 1. **Analisi Completa:** Rivedendo `Software Design Document.md` e `Specifica Requisiti Software.md`, è emersa una discrepanza tra il `REQ-CORE-02` (Classificazione Severity `CRITICAL` via Path Traversal/Cmd Injection) e lo schema reale delle Allerte in tabella.
 2. **PATTERN_MATCH Alert:** La `AnalyticsService` generava solo `DOS_ATTACK` e `BRUTE_FORCE`. È stato implementato il metodo `checkPatternMatch` che legge la gravità `CRITICAL` assegnata dall'Idempotency filter nell'`EventConsumerService` e trasforma questa classificazione in un allarme `PATTERN_MATCH` persistente nel database, chiudendo l'ultimo gap nei requisiti funzionali previsti.
+
+## 📅 Log Entry: Phase 7 - Web Dashboard 
+**Date:** 24 February 2026
+**Phase:** 7 (Extra)
+
+### 🎯 What Was Made
+1. **Frontend Architettura (React + Vite):** È stata creata una Single Page Application de-accoppiata per consumare le API del SIEM in modo interattivo.
+2. **Sicurezza CORS:** Aggiornate le `SecurityConfig` di Spring Boot per accettare richieste `ORIGIN` sicure dal WebServer di sviluppo React (`localhost:5173`).
+3. **Flusso Autenticazione:** Implementato Context API per gestire e memorizzare in `localStorage` il JWT e iniettarlo automaticamente come `Bearer` token in ogni Axios Request successiva.
+4. **Dashboard View (Remote Facade):** L'UI consuma l'endpoint `GET /api/dashboard/summary` mostrando visivamente stato dei DB, messaggi/sec e una tabella Live degli alert (Inclusi i nuovi PATTERN_MATCH).
+5. **Investigation View (Batch Request):** Implementata una Text Area massiva per interrogare storicamente l'attività di molteplici Indirizzi IP consumando `POST /api/investigation/batch`.
+6. **Session Draft (Server-Side Session):** Implementato un Editor JSON che persiste lo stato di lavoro dell'analista sul DB tramite `POST /api/draft`, sincronizzando lo stato al ricaricamento.
