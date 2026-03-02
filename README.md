@@ -13,35 +13,66 @@ The project follows a modular Spring Boot architecture:
 
 ## 🛠️ Tech Stack
 
-- **Java 25** (Open JDK)
+- **Java 21** (Open JDK)
 - **Spring Boot 3**
+- **Node.js & React** (Frontend Dashboard)
 - **RabbitMQ** (Message Broker)
 - **PostgreSQL** (Relational Database)
 - **Resilience4J** (Rate Limiting & Circuit Breakers)
 - **Docker & Docker Compose**
 
-## 🚀 Quick Start
+## 🚀 Local Deployment
+
+To run the complete Sentinel SIEM platform locally (Infrastructure, Backend, and Frontend), follow these steps:
 
 ### Prerequisites
 - Docker & Docker Compose
-- JDK 25 or higher
+- JDK 21 or higher
 - Maven (or use `./mvnw`)
+- Node.js (v18+) & npm
 
-### Running the Infrastructure
-Start PostgreSQL and RabbitMQ using Docker:
+### 1. Start the Infrastructure
+Start the PostgreSQL database and RabbitMQ message broker:
 ```bash
 docker-compose up -d
 ```
 
-### Building the Project
+### 2. Build and Start Backend Services
+Build the root project (this builds common, agent, core, and api modules):
 ```bash
-./mvnw clean install
+./mvnw clean install -DskipTests
 ```
+Open three separate terminals and start each backend module:
 
-### Starting the Modules
-You can start the modules independently. For example, to start the Core engine:
+**Core Engine:** (Processes events and detects threats)
 ```bash
 ./mvnw -pl sentinel-core spring-boot:run
+```
+
+**API Layer:** (Serves data to the frontend)
+```bash
+./mvnw -pl sentinel-api spring-boot:run
+```
+
+**Agent Simulator:** (Generates and sends logs)
+```bash
+./mvnw -pl sentinel-agent spring-boot:run
+```
+
+### 3. Start the Frontend Dashboard
+Open a new terminal, install dependencies, and start the React app:
+```bash
+cd sentinel-dashboard
+npm install
+npm run dev
+```
+The dashboard will be available at `http://localhost:5173`.
+
+### Stopping the Environment
+- Stop the spring-boot apps and frontend by pressing `CTRL+C` in their terminals.
+- Stop the Docker containers:
+```bash
+docker-compose down
 ```
 
 ## 📊 Design Patterns
