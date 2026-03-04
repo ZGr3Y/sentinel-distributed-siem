@@ -36,8 +36,16 @@ public class ReplayEngine {
         this.producer = producer;
     }
 
+    @Value("${sentinel.agent.mode:replay}")
+    private String agentMode;
+
     @EventListener(ApplicationReadyEvent.class)
     public void startReplay() {
+        if (!"replay".equalsIgnoreCase(agentMode)) {
+            log.info("Agent mode is '{}'. ReplayEngine is disabled.", agentMode);
+            return;
+        }
+
         log.info("Starting Time-Shifted Replay Engine with speedup factor {}x", speedupFactor);
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(logFile.getInputStream()))) {
