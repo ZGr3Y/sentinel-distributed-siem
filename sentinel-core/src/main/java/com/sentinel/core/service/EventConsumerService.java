@@ -1,11 +1,14 @@
 package com.sentinel.core.service;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +16,6 @@ import com.sentinel.common.domain.dto.EventDTO;
 import com.sentinel.common.domain.entity.RawEvent;
 import com.sentinel.common.util.HashUtils;
 import com.sentinel.core.repository.RawEventRepository;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EventConsumerService {
@@ -21,11 +23,14 @@ public class EventConsumerService {
     private static final Logger log = LoggerFactory.getLogger(EventConsumerService.class);
     private final RawEventRepository repository;
     private final AnalyticsService analyticsService;
+    private final Executor analyticsExecutor;
 
     @Autowired
-    public EventConsumerService(RawEventRepository repository, AnalyticsService analyticsService) {
+    public EventConsumerService(RawEventRepository repository, AnalyticsService analyticsService,
+            @Qualifier("analyticsExecutor") Executor analyticsExecutor) {
         this.repository = repository;
         this.analyticsService = analyticsService;
+        this.analyticsExecutor = analyticsExecutor;
     }
 
     @RabbitListener(queues = "${sentinel.queue.ingress}")
@@ -63,7 +68,7 @@ public class EventConsumerService {
                 } catch (Exception e) {
                     log.error("Error during asynchronous analytics processing for event: {}", eventHash, e);
                 }
-            });
+            }, analyticsExecutor);
 
         } catch (DataIntegrityViolationException e) {
             log.warn("Duplicate event discarded: {}. Cause: {}", dto.getEventId(),

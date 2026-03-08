@@ -1,11 +1,19 @@
 package com.sentinel.common.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "alerts")
+@Table(name = "alerts", indexes = {
+        @Index(name = "idx_alerts_source_ip", columnList = "source_ip"),
+        @Index(name = "idx_alerts_created_at", columnList = "created_at")
+})
+@Getter
+@Setter
+@NoArgsConstructor
 public class Alert {
 
     @Id
@@ -24,57 +32,24 @@ public class Alert {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public Alert() {
+    /**
+     * Convenience constructor that auto-generates ID and timestamp.
+     */
+    public Alert(String type, String sourceIp, String description) {
         this.id = UUID.randomUUID().toString();
         this.createdAt = LocalDateTime.now();
-    }
-
-    public Alert(String type, String sourceIp, String description) {
-        this();
         this.type = type;
         this.sourceIp = sourceIp;
         this.description = description;
     }
 
-    // Getters and Setters
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getSourceIp() {
-        return sourceIp;
-    }
-
-    public void setSourceIp(String sourceIp) {
-        this.sourceIp = sourceIp;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    @PrePersist
+    private void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }

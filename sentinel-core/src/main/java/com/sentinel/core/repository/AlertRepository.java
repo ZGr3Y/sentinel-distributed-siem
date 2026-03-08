@@ -16,5 +16,7 @@ public interface AlertRepository extends JpaRepository<Alert, String> {
 
     List<Alert> findBySourceIp(String sourceIp);
 
+    List<Alert> findBySourceIpIn(List<String> sourceIps);
+
     List<Alert> findTop10ByOrderByCreatedAtDesc();
 }

@@ -15,6 +15,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+import org.springframework.beans.factory.annotation.Value;
+
 /**
  * Pattern: Reference Monitor (L2_ReferenceMonitor)
  * Pattern: RBAC (L3_RoleBasedAC)
@@ -30,6 +32,9 @@ import java.util.Arrays;
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+        @Value("${sentinel.cors.allowed-origins}")
+        private String allowedOrigins;
 
         public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
                 this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -53,6 +58,8 @@ public class SecurityConfig {
                                 .authorizeHttpRequests(auth -> auth
                                                 // Public endpoints
                                                 .requestMatchers("/auth/login").permitAll()
+                                                // Swagger UI (public for dev convenience)
+                                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                                 // RBAC: ADMIN-only endpoints
                                                 .requestMatchers("/api/reports/**").hasRole("ADMIN")
                                                 // All other API endpoints require authentication (any role)
@@ -66,7 +73,7 @@ public class SecurityConfig {
         @Bean
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+                configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
                 configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
                 configuration.setAllowCredentials(true);

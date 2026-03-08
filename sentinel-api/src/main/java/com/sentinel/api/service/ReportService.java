@@ -8,6 +8,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.HashMap;
@@ -42,6 +43,7 @@ public class ReportService {
      * fallbackGetReport is called.
      */
     @CircuitBreaker(name = "reportService", fallbackMethod = "fallbackGetReport")
+    @Transactional
     public String getDailyReport() {
         LocalDate today = LocalDate.now();
 

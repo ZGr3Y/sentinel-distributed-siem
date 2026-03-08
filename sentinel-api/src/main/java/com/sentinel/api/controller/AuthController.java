@@ -1,9 +1,11 @@
 package com.sentinel.api.controller;
 
 import com.lambdaworks.crypto.SCryptUtil;
+import com.sentinel.api.dto.LoginRequest;
 import com.sentinel.api.repository.UserRepository;
 import com.sentinel.api.security.JwtUtils;
 import com.sentinel.common.domain.entity.User;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -46,19 +48,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Username and password are required."));
-        }
-
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest credentials) {
         // Step 1: Query UserTable
-        Optional<User> userOptional = userRepository.findByUsername(username);
+        Optional<User> userOptional = userRepository.findByUsername(credentials.getUsername());
         if (userOptional.isEmpty()) {
-            log.warn("Login attempt failed: user '{}' not found", username);
+            log.warn("Login attempt failed: user '{}' not found", credentials.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid credentials."));
         }
@@ -67,8 +61,8 @@ public class AuthController {
 
         // Step 2: Verify password using Scrypt (L5_Auth-hash slide 11)
         // SCryptUtil.check(passwd, authenticationInfo) extracts the salt internally
-        if (!SCryptUtil.check(password, user.getPasswordHash())) {
-            log.warn("Login attempt failed: wrong password for user '{}'", username);
+        if (!SCryptUtil.check(credentials.getPassword(), user.getPasswordHash())) {
+            log.warn("Login attempt failed: wrong password for user '{}'", credentials.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid credentials."));
         }
@@ -76,7 +70,7 @@ public class AuthController {
         // Step 3: Generate JWT (ProofOfIdentity) with user ID and role
         String token = jwtUtils.generateToken(user.getId(), user.getRole());
 
-        log.info("User '{}' authenticated successfully with role '{}'", username, user.getRole());
+        log.info("User '{}' authenticated successfully with role '{}'", credentials.getUsername(), user.getRole());
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
