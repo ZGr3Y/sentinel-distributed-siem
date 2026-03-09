@@ -5,6 +5,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * Agent-specific RabbitMQ configuration.
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * {@link com.sentinel.common.config.RabbitMQConfig} in sentinel-common.
  */
 @Configuration
+@Import(com.sentinel.common.config.RabbitMQConfig.class)
 public class RabbitMQConfig {
 
     @Bean
