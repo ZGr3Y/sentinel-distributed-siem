@@ -24,11 +24,22 @@ This document tracks how Professor Tramontana's design patterns from the lecture
 *   **Where it's used:** Core Module (`AnalyticsService.java`).
 *   **How it works:** We use `Resilience4j`'s RateLimiter to dynamically track request volume per IP address. If an IP exceeds 100 requests per minute (DOS) or 10 failed authentications per minute (Brute Force), the RateLimiter triggers an internal alarm that generates an `Alert` entity in the database.
 
----
+### 5. Remote Facade & Data Transfer Object (1.10)
+*   **Where it's used:** API Module (`DashboardController.java` & `DashboardSummaryDTO.java`).
+*   **How it works:** Instead of the frontend making numerous small requests to fetch alerts, logs, and stats individually, the `DashboardController` acts as a Remote Facade. It aggregates the data and returns a coarse-grained `DashboardSummaryDTO`, minimizing network trips and reducing chatty client-server behavior.
 
-## Planned Patterns (Backlog)
+### 6. Request Batch (1.15)
+*   **Where it's used:** API Module (`InvestigationService.java`).
+*   **How it works:** When investigating multiple IPs simultaneously, the frontend sends a single `BatchQueryRequest` containing a list of IPs. The backend processes this using a single IN-clause database query, completely avoiding the N+1 query problem and returning all results as a `BatchQueryResponse`.
 
-*   **Remote Facade & Data Transfer Object (1.10):** To be implemented in the API module for fetching dashboard summaries.
-*   **Request Batch (1.15):** To be implemented in the API module for bulk log retrieval.
-*   **Circuit Breaker (1.16):** To be implemented in the API module to protect database queries.
-*   **Role-Based Access Control & Authenticator (1.2, 1.5):** To be implemented in the Security module.
+### 7. Circuit Breaker (1.16)
+*   **Where it's used:** API Module (`ReportService.java`).
+*   **How it works:** Using `Resilience4j`, the `getDailyReport()` method is protected by a Circuit Breaker. If the database is overwhelmed or unresponsive while generating the heavy daily report, the circuit opens and immediately returns a cached or fallback response, rather than causing cascading failures across the system.
+
+### 8. Authenticator & Role-Based Access Control (1.2, 1.5)
+*   **Where it's used:** Security Module (`SecurityConfig.java`, `AuthController.java`, `JwtTokenProvider.java`).
+*   **How it works:** The system implements a robust Authenticator using JSON Web Tokens (JWT) and Scrypt password hashing. Once authenticated, Role-Based Access Control (RBAC) is enforced using Spring Security's `@PreAuthorize("hasRole('ADMIN')")` on sensitive API endpoints, ensuring students vs. professors have appropriate access boundaries.
+
+### 9. Serialized LOB (Large Object) Pattern
+*   **Where it's used:** Common/API Modules (`DailyReport.java`, `DraftState.java`).
+*   **How it works:** Complex, heavily nested JSON configurations (like dashboard layout drafts) or generated report data are stored in the database as serialized JSON strings within a single column, rather than creating an overly complex and highly joined relational schema.

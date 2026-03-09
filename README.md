@@ -75,14 +75,26 @@ The dashboard will be available at `http://localhost:5173`.
 docker-compose down
 ```
 
-## 📊 Design Patterns
-This project implements several architectural and messaging patterns, including:
-- **Idempotent Receiver**: Ensuring events are processed once.
-- **Remote Facade**: Aggregated dashboard endpoints.
-- **Serialized LOB**: Optimizing database storage for analytics.
-- **Circuit Breaker**: System resilience during failures.
+## 🎓 Academic Context (Professor View)
 
-Refer to [DESIGN_PATTERNS.md](file:///home/paolo/Downloads/IDSD/Progetto/DESIGN_PATTERNS.md) for more details.
+This project was developed as a university course assignment, with a primary focus on correctly applying enterprise software architecture and integration patterns taught in lectures (e.g., Prof. Tramontana's slides).
+
+The system architecture prioritizes **pattern demonstrations over raw performance**. For example, while a production SIEM would use Redis for rate-limiting and Elasticsearch for log storage, this academic version uses Spring/Resilience4j in-memory structures and PostgreSQL to clearly showcase the implementation of specific design patterns without introducing excessive infrastructural complexity.
+
+### 📊 Applied Design Patterns
+The following patterns have been explicitly implemented in the codebase:
+
+1. **Messaging (1.8):** Asynchronous decoupling between Agent and Core via RabbitMQ.
+2. **Idempotent Receiver (1.12):** Deterministic SHA-256 event hashing to prevent duplicate log ingestion.
+3. **CompletableFuture (2.5):** Asynchronous threat analysis to unblock the ingestion queue.
+4. **Rate Limiter (2.2 / 2.6):** Resilience4j dynamic sliding windows for DoS and Brute Force detection.
+5. **Remote Facade & DTO (1.10):** Coarse-grained `DashboardSummaryDTO` to minimize frontend API calls.
+6. **Request Batch (1.15):** Single `IN` clause database batching for multi-IP investigations.
+7. **Circuit Breaker (1.16):** Fallback protection for heavy reporting queries.
+8. **Authenticator & RBAC (1.2, 1.5):** JWT-based authentication with Spring Security Role-Based Access Control.
+9. **Serialized LOB:** Storing complex, schema-less report snapshots inside a single database column.
+
+For exact file locations and detailed explanations of how each pattern is coded, please review the dedicated **[DESIGN_PATTERNS.md](DESIGN_PATTERNS.md)** document.
 
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
