@@ -79,13 +79,14 @@ Servizio Spring (@Service) responsabile del consumo.
   4. Salva su DB.  
   5. Invoca AnalysisEngine.analyze(event).
 
-### **3.2 AnalysisEngine (Sliding Window)**
+### **3.2 AnalyticsService (Rate Limiting & Threat Detection)**
 
-Componente Singleton (@Component).
+Componente Singleton (@Service).
 
-* **Campo:** ConcurrentHashMap\<String, Deque\<LocalDateTime\>\> trafficWindow.  
-* **Metodo:** analyze(EventDTO event)  
-  1. trafficWindow.computeIfAbsent(ip, k \-\> new ArrayDeque\<\>()).  
-  2. deque.addLast(now).  
-  3. cleanUpOldRequests(deque): Rimuove timestamp \< (now \- 60s).  
-  4. if (deque.size() \> THRESHOLD) \-\> alertService.createAlert(...).
+* **Campo:** `RateLimiterRegistry rateLimiterRegistry` fornito da Resilience4j.
+* **Metodi di Detection:** `checkDos(event)`, `checkBruteForce(event)`, `checkPatternMatch(event)`
+* **Flusso (Esempio per DOS):**
+  1. Ottieni il RateLimiter per l'IP tramite `rateLimiterRegistry.rateLimiter("dos-" + sourceIp, "dos")`.
+  2. Verifica `!dosLimiter.acquirePermission()`.
+  3. Se il limite (100 req/min) è superato e il cooldown (60 sec) è scaduto, crea un `Alert`.
+  4. L'uso di Resilience4j garantisce concorrenza thread-safe e altissime prestazioni rispetto a una implementazione manuale di Sliding Window.

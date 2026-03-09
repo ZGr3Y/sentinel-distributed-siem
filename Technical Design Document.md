@@ -17,25 +17,25 @@
 ### **application.properties (Backend)**
 
 `# --- SERVER ---`  
-`server.port=8080`
+`server.port=${SERVER_PORT:8080}`
 
 `# --- DATASOURCE ---`  
-`spring.datasource.url=jdbc:postgresql://postgres:5432/sentinel_db`  
-`spring.datasource.username=sentinel`  
-`spring.datasource.password=sentinel_password`  
+`spring.datasource.url=${DB_URL:jdbc:postgresql://localhost:5432/sentinel_db}`  
+`spring.datasource.username=${DB_USER:sentinel}`  
+`spring.datasource.password=${DB_PASSWORD:sentinel_password}`  
 `spring.jpa.hibernate.ddl-auto=update`  
 `spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect`
 
 `# --- RABBITMQ ---`  
-`spring.rabbitmq.host=rabbitmq`  
-`spring.rabbitmq.port=5672`  
-`spring.rabbitmq.username=user`  
-`spring.rabbitmq.password=password`  
+`spring.rabbitmq.host=${RABBITMQ_HOST:localhost}`  
+`spring.rabbitmq.port=${RABBITMQ_PORT:5672}`  
+`spring.rabbitmq.username=${RABBITMQ_USER:user}`  
+`spring.rabbitmq.password=${RABBITMQ_PASSWORD:password}`  
 `# Serializzazione JSON automatica`  
 `spring.rabbitmq.listener.simple.message-converter=jsonMessageConverter`
 
 `# --- SENTINEL CUSTOM ---`  
-`sentinel.jwt.secret=MySecretKeyForSigningHmacSha256`  
+`sentinel.jwt.secret=${JWT_SECRET:MySecretKeyForSigningHmacSha256}`  
 `sentinel.analysis.dos-threshold=100`  
 `sentinel.analysis.window-seconds=60`  
 `sentinel.queue.ingress=sentinel.queue.ingress`
