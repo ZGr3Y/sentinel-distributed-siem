@@ -1,8 +1,8 @@
-# 🛡️ Sentinel Distributed SIEM
+#  Sentinel Distributed SIEM
 
 Sentinel is a distributed Security Information and Event Management (SIEM) system designed for real-time log ingestion, analysis, and threat detection. It leverages a modular architecture to scale ingestion and analytics independently.
 
-## 🏗️ Architecture
+##  Architecture
 
 The project follows a modular Spring Boot architecture:
 
@@ -11,7 +11,7 @@ The project follows a modular Spring Boot architecture:
 - **`sentinel-api`**: REST API layer providing dashboards, investigation endpoints, and statistical reports.
 - **`sentinel-common`**: Shared domain entities, DTOs, and utilities.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Java 21** (Open JDK)
 - **Spring Boot 3**
@@ -21,7 +21,7 @@ The project follows a modular Spring Boot architecture:
 - **Resilience4J** (Rate Limiting & Circuit Breakers)
 - **Docker & Docker Compose**
 
-## 🚀 Local Deployment
+##  Local Deployment
 
 To run the complete Sentinel SIEM platform locally (Infrastructure, Backend, and Frontend), follow these steps:
 
@@ -75,14 +75,13 @@ The dashboard will be available at `http://localhost:5173`.
 docker-compose down
 ```
 
-## 📊 Design Patterns
+##  Design Patterns
 This project implements several architectural and messaging patterns, including:
 - **Idempotent Receiver**: Ensuring events are processed once.
 - **Remote Facade**: Aggregated dashboard endpoints.
 - **Serialized LOB**: Optimizing database storage for analytics.
 - **Circuit Breaker**: System resilience during failures.
 
-Refer to [DESIGN_PATTERNS.md](file:///home/paolo/Downloads/IDSD/Progetto/DESIGN_PATTERNS.md) for more details.
 
-## 📜 License
+##  License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
