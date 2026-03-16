@@ -34,6 +34,8 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validation.
 - Branch Protections mandate that all CI pipelines pass before PRs can be merged into `main` or `develop`.
 
+##  Tech Stack
+
 ##  Technologies
 
 ### Backend
@@ -48,6 +50,8 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - **Maven**
 
 ### Infrastructure
+
+##  Local Deployment
 
 - **Docker**
 - **Docker Compose**
@@ -157,6 +161,13 @@ The following patterns have been explicitly implemented in the codebase:
 9. **Serialized LOB:** Storing complex, schema-less report snapshots inside a single database column.
 
 For exact file locations and detailed explanations of how each pattern is coded, please review the dedicated **[MAPPATURA_DESIGN_PATTERNS.md](MAPPATURA_DESIGN_PATTERNS.md)** document.
+
+##  Design Patterns
+This project implements several architectural and messaging patterns, including:
+- **Idempotent Receiver**: Ensuring events are processed once.
+- **Remote Facade**: Aggregated dashboard endpoints.
+- **Serialized LOB**: Optimizing database storage for analytics.
+- **Circuit Breaker**: System resilience during failures.
 
 ##  License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
