@@ -1,19 +1,7 @@
-import { createContext, useState, useEffect } from 'react';
-import type { ReactNode, FC } from 'react';
+import { useState, useEffect } from 'react';
+import type { FC, ReactNode } from 'react';
+import { AuthContext } from './AuthContext';
 import { api } from '../services/api';
-
-interface AuthContextType {
-    token: string | null;
-    userId: string | null;
-    role: string | null;
-    login: (username: string, password: string) => Promise<void>;
-    logout: () => void;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    error: string | null;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('sentinel_jwt'));
@@ -71,5 +59,3 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
-
