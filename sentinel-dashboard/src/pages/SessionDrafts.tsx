@@ -24,7 +24,7 @@ export const SessionDrafts = () => {
                     setDraftPayload(response.data.draftPayload);
                     setLastSaved(new Date(response.data.updatedAt!).toLocaleString());
                 }
-            } catch (err) {
+            } catch {
                 console.error("No draft found or failed to load");
             }
         };
@@ -39,7 +39,7 @@ export const SessionDrafts = () => {
                 payload: draftPayload
             });
             setLastSaved(new Date(response.data.updatedAt!).toLocaleString());
-        } catch (err) {
+        } catch {
             setError("Failed to persist draft to PostgreSQL via Sentinel Core.");
         } finally {
             setLoading(false);
