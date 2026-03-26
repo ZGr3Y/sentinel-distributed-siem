@@ -60,7 +60,7 @@ public class GeneratorEngine {
         });
 
         generatorThread.setName("LogGeneratorThread");
-        generatorThread.setDaemon(true); // Don't block application shutdown
+        generatorThread.setDaemon(false); // Keep JVM alive for local testing
         generatorThread.start();
     }
 }
