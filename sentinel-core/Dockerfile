@@ -33,8 +33,8 @@ RUN addgroup -S appgroup && adduser -S USER -G appgroup
 
 WORKDIR /app
 
-# Copy only the compiled JAR from the builder stage
-COPY --from=builder /workspace/sentinel-core/target/*.jar app.jar
+# Copy only the compiled executable JAR from the builder stage
+COPY --from=builder /workspace/sentinel-core/target/*-exec.jar app.jar
 
 # Set ownership to non-root user
 RUN chown USER:appgroup app.jar
