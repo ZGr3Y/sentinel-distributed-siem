@@ -23,44 +23,44 @@ The project follows a modular Spring Boot architecture:
 
 ## 🚀 Local Deployment
 
-To run the complete Sentinel SIEM platform locally (Infrastructure, Backend, and Frontend), follow these steps:
-
 ### Prerequisites
 - Docker & Docker Compose
-- JDK 21 or higher
-- Maven (or use `./mvnw`)
-- Node.js (v18+) & npm
+- JDK 21 or higher (only for manual development mode)
+- Maven (or use `./mvnw`) (only for manual development mode)
+- Node.js (v18+) & npm (only for manual development mode)
 
-### 1. Start the Infrastructure
-Start the PostgreSQL database and RabbitMQ message broker:
+### Option A: Full Stack via Docker (Recommended)
+Start the entire system (infrastructure + all services) with a single command:
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+This builds and starts: PostgreSQL, RabbitMQ, sentinel-core, sentinel-api, sentinel-agent (generate mode), and the React dashboard.
+
+- **Dashboard**: `http://localhost`
+- **API**: `http://localhost:8083`
+- **RabbitMQ Management**: `http://localhost:15672` (user/password)
+
+To stop:
+```bash
+docker compose down
 ```
 
-### 2. Build and Start Backend Services
-Build the root project (this builds common, agent, core, and api modules):
-```bash
-./mvnw clean install -DskipTests
-```
-Open three separate terminals and start each backend module:
+### Option B: Manual Development Mode
+Use this when actively developing code — you get hot-reload on both backend and frontend.
 
-**Core Engine:** (Processes events and detects threats)
+**1. Start Infrastructure Only:**
+```bash
+docker compose up -d postgres rabbitmq
+```
+
+**2. Start Backend Services** (three separate terminals):
 ```bash
 ./mvnw -pl sentinel-core spring-boot:run
-```
-
-**API Layer:** (Serves data to the frontend)
-```bash
 ./mvnw -pl sentinel-api spring-boot:run
+./mvnw -pl sentinel-agent spring-boot:run -Dspring-boot.run.arguments="--sentinel.agent.mode=generate"
 ```
 
-**Agent Simulator:** (Generates and sends logs)
-```bash
-./mvnw -pl sentinel-agent spring-boot:run
-```
-
-### 3. Start the Frontend Dashboard
-Open a new terminal, install dependencies, and start the React app:
+**3. Start Frontend Dashboard:**
 ```bash
 cd sentinel-dashboard
 npm install
@@ -69,11 +69,8 @@ npm run dev
 The dashboard will be available at `http://localhost:5173`.
 
 ### Stopping the Environment
-- Stop the spring-boot apps and frontend by pressing `CTRL+C` in their terminals.
-- Stop the Docker containers:
-```bash
-docker-compose down
-```
+- Manual mode: press `CTRL+C` in each terminal, then `docker compose down`
+- Docker mode: `docker compose down`
 
 ## 🎓 Academic Context (Professor View)
 

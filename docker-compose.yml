@@ -1,4 +1,7 @@
 services:
+  # ============================================
+  # Infrastructure Services
+  # ============================================
   postgres:
     image: postgres:15-alpine
     container_name: sentinel-postgres
@@ -25,7 +28,7 @@ services:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
     ports:
-      - "5672:5672" # AMQP protocol port
+      - "5672:5672"   # AMQP protocol port
       - "15672:15672" # Management UI port
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
@@ -37,10 +40,86 @@ services:
       timeout: 5s
       retries: 3
 
+  # ============================================
+  # Application Services
+  # ============================================
+  sentinel-core:
+    build:
+      context: .
+      dockerfile: sentinel-core/Dockerfile
+    container_name: sentinel-core
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/sentinel_db
+      DB_USERNAME: sentinel
+      DB_PASSWORD: sentinel_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+    networks:
+      - sentinel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  sentinel-api:
+    build:
+      context: .
+      dockerfile: sentinel-api/Dockerfile
+    container_name: sentinel-api
+    ports:
+      - "8083:8083"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/sentinel_db
+      DB_USERNAME: sentinel
+      DB_PASSWORD: sentinel_password
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+      JWT_SECRET: SuperSecretDefaultKeyForLocalDevelopmentMakeSureItIs256BitsAtLeast000000000000000000
+      CORS_ORIGINS: http://localhost
+    networks:
+      - sentinel-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  sentinel-agent:
+    build:
+      context: .
+      dockerfile: sentinel-agent/Dockerfile
+    container_name: sentinel-agent
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+      SENTINEL_AGENT_MODE: generate
+    networks:
+      - sentinel-network
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  sentinel-dashboard:
+    build:
+      context: ./sentinel-dashboard
+      dockerfile: Dockerfile
+    container_name: sentinel-dashboard
+    ports:
+      - "80:80"
+    networks:
+      - sentinel-network
+    depends_on:
+      sentinel-api:
+        condition: service_started
+
 volumes:
   postgres_data:
   rabbitmq_data:
-
 
 networks:
   sentinel-network:
