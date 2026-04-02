@@ -27,3 +27,6 @@ scripts/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Large Datasets
+NASA_access_log_*/

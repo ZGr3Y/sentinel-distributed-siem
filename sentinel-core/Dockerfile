@@ -15,14 +15,20 @@ WORKDIR /workspace
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-COPY sentinel-common sentinel-common
-COPY sentinel-core sentinel-core
+COPY sentinel-common/pom.xml sentinel-common/
+COPY sentinel-agent/pom.xml sentinel-agent/
+COPY sentinel-core/pom.xml sentinel-core/
+COPY sentinel-api/pom.xml sentinel-api/
+
+COPY sentinel-common/src sentinel-common/src
+COPY sentinel-core/src sentinel-core/src
 
 # Ensure Maven wrapper is executable
 RUN chmod +x mvnw
 
 # Build only sentinel-common + sentinel-core, skip tests
-RUN ./mvnw -pl sentinel-common,sentinel-core -am package -DskipTests
+# Use BuildKit cache mount to persist ~/.m2 between builds and across modules (locked to prevent concurrent corruption)
+RUN --mount=type=cache,id=maven-v3,target=/root/.m2,sharing=locked ./mvnw -pl sentinel-common,sentinel-core -am package -DskipTests
 
 # --- Stage 2: Runtime ---
 # Minimal JRE-only Alpine image. No compiler, no source code.

@@ -12,13 +12,18 @@ WORKDIR /workspace
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-COPY sentinel-common sentinel-common
-COPY sentinel-agent sentinel-agent
+COPY sentinel-common/pom.xml sentinel-common/
+COPY sentinel-agent/pom.xml sentinel-agent/
+COPY sentinel-core/pom.xml sentinel-core/
+COPY sentinel-api/pom.xml sentinel-api/
+
+COPY sentinel-common/src sentinel-common/src
+COPY sentinel-agent/src sentinel-agent/src
 
 RUN chmod +x mvnw
 
 # Build sentinel-common + sentinel-agent
-RUN ./mvnw -pl sentinel-common,sentinel-agent -am package -DskipTests
+RUN --mount=type=cache,id=maven-v3,target=/root/.m2,sharing=locked ./mvnw -pl sentinel-common,sentinel-agent -am package -DskipTests
 
 # --- Stage 2: Runtime ---
 FROM eclipse-temurin:21-jre-alpine

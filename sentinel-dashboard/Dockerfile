@@ -13,8 +13,11 @@ WORKDIR /app
 # Copy dependency manifests first (leverages Docker layer caching)
 COPY package.json package-lock.json ./
 
-# Deterministic install from lockfile
-RUN npm ci
+# Deterministic install with increased network resilience (ETIMEDOUT fix for Docker)
+RUN --mount=type=cache,target=/root/.npm \
+    npm config set registry http://registry.npmjs.org/ && \
+    npm config set fetch-retries 5 && \
+    npm ci --audit=false --fund=false
 
 # Copy source files
 COPY . .
