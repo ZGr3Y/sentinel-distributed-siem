@@ -6,10 +6,16 @@ Sentinel is a distributed Security Information and Event Management (SIEM) syste
 
 The project follows a modular Spring Boot architecture:
 
-- **`sentinel-agent`**: Log source simulator. Parses historical logs (e.g., NASA datasets) and replays them in real-time.
-- **`sentinel-core`**: The brain of the SIEM. Handles event ingestion from RabbitMQ, idempotency, and threat detection (DoS, Brute Force).
+- **`sentinel-agent`**: Log source simulator. Features an **Advanced Attack Simulator** that dynamically injects structured anomalies (DoS, Brute Force, Malicious Payloads) over a steady stream of background traffic, alongside historical Time-Shifted Replay capabilities.
+- **`sentinel-core`**: The brain of the SIEM. Handles event ingestion from RabbitMQ, idempotency, and threat detection (DoS, Brute Force, Regex Pattern Matching).
 - **`sentinel-api`**: REST API layer providing dashboards, investigation endpoints, and statistical reports.
 - **`sentinel-common`**: Shared domain entities, DTOs, and utilities.
+
+## ⚙️ Continuous Integration (CI/CD)
+The project enforces strict code quality and compatibility checks via GitHub Actions:
+- **Backend Pipeline**: Validates compilation on JDK 21 utilizing the native Maven Wrapper (`./mvnw`).
+- **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validaton.
+- Branch Protections mandate that all CI pipelines pass before PRs can be merged into `main` or `develop`.
 
 ## 🛠️ Tech Stack
 
