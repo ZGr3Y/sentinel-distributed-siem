@@ -10,7 +10,7 @@
 | **Resilience** | io.github.resilience4j:resilience4j-spring-boot3 | 2.1.0 | L17\_Resilience4J.pdf |
 | **Messaging** | org.springframework.amqp:spring-rabbit | 3.1.0 | L16\_Messaging.pdf |
 | **Database** | PostgreSQL JDBC Driver | 42.6.0 | \- |
-| **Parsing** | Java Regex (java.util.regex) | JDK 17 | \- |
+| **Parsing** | Java Regex (java.util.regex) | JDK 21 | \- |
 
 ## **2\. Configurazioni Operative (Properties)**
 
@@ -85,3 +85,22 @@ Strategia per garantire *Exactly-Once Processing* (simulato).
        `// ACK manuale positivo per rimuoverlo dalla coda`  
    `}`  
    *Questo approccio sfrutta il DB come "source of truth" per l'idempotenza (Slide L11\_IdempotentReceiver, Soluzione "MessageDB").*
+
+### **3.3 Advanced Attack Simulation (Generative Mode)**
+
+Algoritmo progettato per accertare il funzionamento dei Rate Limiter di Sentinel-Core (DoS e Brute Force), mitigando l'ostacolo intrinseco imposto dal Controllo di Idempotenza (3.2).
+
+Essendo le raffiche DoS composte da richieste identiche iniettate in cicli `while` sub-millisecondo, l'Agent genererebbe fisiologicamente Payload identici provocando il rigetto per Idempotenza prima ancora che la minaccia arrivasse agli Analizzatori logici. 
+
+`// Pseudo-codice`  
+`for (int i = 0; i < 150; i++) {`
+    `attackQueue.add(EventDTO.builder()`
+        `.timestamp(LocalDateTime.now())` // I timestamp possono coincidere sotto rapida iterazione
+        `.sourceIp(attackerIp)`
+        `.method("GET")`
+        `.endpoint(generateNormalEndpoint())`
+        `// EVASIONE IDEMPOTENZA:` 
+        `// L'iniezione incrementale dell'iteratore nei Byte garantisce l'unicità matematica dell'Hash SHA-256`
+        `.bytes(500L + i)`
+    `.build());`
+`}`

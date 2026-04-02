@@ -66,27 +66,27 @@ Memorizza le anomalie rilevate.
 
 ## **3\. Class Design (Componenti Core)**
 
-### **3.1 LogIngestionService**
+### **3.1 EventConsumerService (Ingestion & Demultiplexing)**
 
-Servizio Spring (@Service) responsabile del consumo.
+Servizio Spring (@Service) responsabile del consumo e classificazione primordiale.
 
 * **Metodo:** processMessage(EventDTO event)  
 * **Annotazione:** @RabbitListener(queues \= "${sentinel.queue.ingress}")  
 * **Flusso:**  
-  1. Calcola Hash di event.  
-  2. if (rawEventRepository.existsByEventHash(hash)) return; (Idempotenza).  
+  1. Calcola Hash di event (Idempotency Filter).  
+  2. if (rawEventRepository.existsByEventHash(hash)) return; (Scarta silente).  
   3. Mappa DTO \-\> Entity RawEvent.  
   4. Salva su DB.  
-  5. Invoca AnalysisEngine.analyze(event).
+  5. Assegna una Severity basata su Regex e invoca `analyticsService.analyzeEvent(event)` delegando l'analisi pesante in thread asincrono separato.
 
 ### **3.2 AnalyticsService (Rate Limiting & Threat Detection)**
 
 Componente Singleton (@Service).
 
 * **Campo:** `RateLimiterRegistry rateLimiterRegistry` fornito da Resilience4j.
-* **Metodi di Detection:** `checkDos(event)`, `checkBruteForce(event)`, `checkPatternMatch(event)`
-* **Flusso (Esempio per DOS):**
-  1. Ottieni il RateLimiter per l'IP tramite `rateLimiterRegistry.rateLimiter("dos-" + sourceIp, "dos")`.
-  2. Verifica `!dosLimiter.acquirePermission()`.
-  3. Se il limite (100 req/min) è superato e il cooldown (60 sec) è scaduto, crea un `Alert`.
-  4. L'uso di Resilience4j garantisce concorrenza thread-safe e altissime prestazioni rispetto a una implementazione manuale di Sliding Window.
+* **Metodi di Detection:** `checkDos(sourceIp)`, `checkBruteForce(event)`, `checkPatternMatch(event, sourceIp)`
+* **Flusso (Esempio trino combinato):**
+  1. Le chiamate Volume-Based ottengono il RateLimiter per l'IP via `rateLimiterRegistry.rateLimiter(...)`.
+  2. Fallimento del Limit (Es. DoS > 100/min o BF > 10 fails/min) scatena subito i rispettivi alert volumetrici se fuori dal periodo di Cooldown per l'IP.
+  3. Elaborazione Pattern Match (Payload HTTP infetti `../../etc/passwd`) aggira Resilience4j verificando direttamente la gravità `CRITICAL` ereditata ed emettendo flag istantanei sul database.
+  4. L'ibridazione Resilience4j + Pattern statici garantisce concorrenza thread-safe e altissime prestazioni, superando le logiche di Database Polling tradizionali.

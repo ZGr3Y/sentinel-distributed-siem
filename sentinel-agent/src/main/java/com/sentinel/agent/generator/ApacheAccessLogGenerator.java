@@ -35,8 +35,8 @@ public class ApacheAccessLogGenerator implements LogGenerator {
             return attackQueue.poll();
         }
 
-        // 2% chance to trigger an attack sequence when not currently attacking
-        if (faker.number().numberBetween(1, 100) <= 2) {
+        // 5% chance to trigger an attack sequence when not currently attacking
+        if (faker.number().numberBetween(1, 100) <= 5) {
             injectAttackScenario();
             if (!attackQueue.isEmpty()) {
                 return attackQueue.poll();
@@ -48,30 +48,34 @@ public class ApacheAccessLogGenerator implements LogGenerator {
 
     private void injectAttackScenario() {
         String attackerIp = faker.internet().publicIpV4Address();
-        int scenario = faker.number().numberBetween(1, 4); // 1, 2, or 3
+        
+        // Tuning: 45% chance DoS, 45% Brute Force, 10% Pattern Match
+        int roll = faker.number().numberBetween(1, 100);
+        int scenario = (roll <= 45) ? 1 : (roll <= 90) ? 2 : 3;
 
         switch (scenario) {
-            case 1: // DoS Attack (120 reqs to exceed 100 req/min)
-                for (int i = 0; i < 120; i++) {
+            case 1: // DoS Attack (150 reqs to drastically exceed 100 req/min)
+                for (int i = 0; i < 150; i++) {
                     attackQueue.add(EventDTO.builder()
-                            .timestamp(LocalDateTime.now().plusSeconds(i / 10)) // Simulate slight time variation
+                            .timestamp(LocalDateTime.now()) 
                             .sourceIp(attackerIp)
                             .method("GET")
                             .endpoint(generateNormalEndpoint())
                             .statusCode(200)
-                            .bytes(faker.number().numberBetween(500L, 2000L))
+                            // Use i in bytes to guarantee 100% unique DB hashes, bypassing idempotency filter dropping packets
+                            .bytes(500L + i) 
                             .build());
                 }
                 break;
-            case 2: // Brute Force (15 reqs to /login with 401/403 to exceed 10 fail/min)
-                for (int i = 0; i < 15; i++) {
+            case 2: // Brute Force (20 reqs to /login to safely exceed 10 fail/min)
+                for (int i = 0; i < 20; i++) {
                     attackQueue.add(EventDTO.builder()
-                            .timestamp(LocalDateTime.now().plusSeconds(i))
+                            .timestamp(LocalDateTime.now())
                             .sourceIp(attackerIp)
                             .method("POST")
                             .endpoint("/login")
                             .statusCode(faker.options().option(401, 403))
-                            .bytes(faker.number().numberBetween(100L, 300L))
+                            .bytes(100L + i) // Guarantee unique hash
                             .build());
                 }
                 break;
