@@ -39,17 +39,17 @@ public String getSecretData() { ... }
 ```mermaid
 graph LR
     subgraph Publisher
-      A[Sentinel Agent]
+      A["Sentinel Agent"]
     end
     subgraph Message Broker
-      MQ[(RabbitMQ Exchange)]
+      MQ[("RabbitMQ Exchange")]
     end
     subgraph Subscriber
-      C[Sentinel Core Consumer]
+      C["Sentinel Core Consumer"]
     end
     
-    A -->|Push Event (AMQP)| MQ
-    MQ -->|Pull costante| C
+    A -->|"Push Event (AMQP)"| MQ
+    MQ -->|"Pull costante"| C
 ```
 **Teoria:** Disaccoppiare la sorgente dei messaggi dal recettore per assorbire picchi anomali generati dalla rete.
 **Trade-off in Sentinel:** Se l'Agent inviasse log in tempo reale tramite banali chiamate `REST POST` verso il Core (Accoppiamento Forte Sincrono), un attacco *Denial of Service* farebbe cadere sia la porta HTTP che il Database. Attraverso **RabbitMQ**, il cluster assorbe il colpo in RAM (Leaky Bucket) e il `sentinel-core` processerà gli avvisi solo alla velocità e capacità massima che i suoi Thread possono sopportare.
