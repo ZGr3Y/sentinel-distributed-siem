@@ -6,9 +6,9 @@ Questo documento enciclopedico illustra in dettaglio come ogni concetto teorico 
 
 ## 1. Sicurezza e Controllo degli Accessi
 
-### `L5_Auth-hash.pdf` & `L5_Token.txt` (Authenticator & Hashing)
+### `L5_Auth-hash` & `L5_Token` (Authenticator & Hashing)
 **Teoria:** Non memorizzare mai password in chiaro; utilizzare algoritmi "memory-hard" come Scrypt per resistere agli attacchi a dizionario. Emettere Token Stateless per scalabilità orizzontale.
-**Trade-off in Sentinel:** Invece del vecchio strato Session/Cookie (problematico su server distribuiti e microservizi SPA), abbiamo delegato l'autenticazione a un Token JWT firmato crittograficamente con `HMAC-SHA256`. Per l'hashing su database, abbiamo adottato l'algoritmo **Scrypt** raccomandato a lezione, in quanto la protezione contro l'accelerazione hardware (Rainbow Table / GPU) su un sistema cyber-security come Sentinel è categorica.
+**Trade-off in Sentinel:** Invece del vecchio strato Session/Cookie (problematico su server distribuiti e microservizi SPA), l'autenticazione è stata delegata a un Token JWT firmato crittograficamente con `HMAC-SHA256`. Per l'hashing su database, è stato adottato l'algoritmo **Scrypt** raccomandato a lezione, in quanto la protezione contro l'accelerazione hardware (Rainbow Table / GPU) su un sistema cyber-security come Sentinel è categorica.
 
 **Snippet dal `DataSeeder.java` e `JwtTokenProvider.java`:**
 ```java
@@ -17,7 +17,7 @@ Questo documento enciclopedico illustra in dettaglio come ogni concetto teorico 
 String adminHash = SCryptUtil.scrypt("admin", 32768, 8, 1);
 ```
 
-### `L3_RoleBasedAC.txt` (Role-Based Access Control)
+### `L3_RoleBasedAC` (Role-Based Access Control)
 **Teoria:** Gli accessi limitati si basano sul ruolo che l'utenza assume nel sistema. 
 **Snippet dal Codice:** Spring Security si aggancia al ruolo `ADMIN` iniettato all'interno del token JWT.
 ```java
@@ -26,15 +26,15 @@ String adminHash = SCryptUtil.scrypt("admin", 32768, 8, 1);
 public String getSecretData() { ... }
 ```
 
-### `L2_ReferenceMonitor.pdf` & `L13_RequestPipeline.pdf` (Reference Monitor)
+### `L2_ReferenceMonitor` & `L13_RequestPipeline` (Reference Monitor)
 **Teoria:** Ogni singola richiesta deve passare attraverso un varco obbligato per un'ispezione di sicurezza (Pipeline/Filtro), rigettando le richieste infette prima che raggiungano la logica di business.
-**Implementazione in Sentinel:** Sfruttiamo il `OncePerRequestFilter` nativo di Spring Boot nel modulo `sentinel-api`. Funge da **Reference Monitor** non by-passabile che intercetta l'Header HTTP `Authorization: Bearer <token>`, ne convalida la firma crittografica e blocca a livello di rete ogni chiamata abusiva con un rigido `401 Unauthorized`.
+**Implementazione in Sentinel:** Viene sfruttato il `OncePerRequestFilter` nativo di Spring Boot nel modulo `sentinel-api`. Funge da **Reference Monitor** non by-passabile che intercetta l'Header HTTP `Authorization: Bearer <token>`, ne convalida la firma crittografica e blocca a livello di rete ogni chiamata abusiva con un rigido `401 Unauthorized`.
 
 ---
 
 ## 2. Ingestion e Tolleranza Ingegneristica
 
-### `L16_Messaging.txt` (Asynchronous Messaging)
+### `L16_Messaging` (Asynchronous Messaging)
 
 ```mermaid
 graph LR
@@ -61,7 +61,7 @@ public void processMessage(EventDTO event) {
 }
 ```
 
-### `L11_IdempotentReceiver.pdf` (Idempotent Receiver)
+### `L11_IdempotentReceiver` (Idempotent Receiver)
 **Teoria:** I broker di messaggistica garantiscono per natura *At-Least-Once Delivery*. Un riavvio di rete comporterebbe messaggi fantasma duplicati, avvelenando i grafici del SIEM con finti report raddoppiati.
 **Trade-off in Sentinel:** Il sistema ignora l'ID dell'Agent ma computa proattivamente una funzione Hash (SHA-256) per sigillare deterministicamente gli attributi del log IP/Tempo. La delega di questo Pattern al Database (`UNIQUE CONSTRAINT`) protegge l'aggregazione matematica senza inquinare il server Java di stati distribuiti inconsistenti.
 **Snippet in `HashUtils.java` e check atomico:**
@@ -73,7 +73,7 @@ if (rawEventRepository.existsByEventHash(hash)) {
 }
 ```
 
-### `L11_JavaCompletable.pdf` (Asynchronous Execution Threading)
+### `L11_JavaCompletable` (Asynchronous Execution Threading)
 **Teoria:** Non sprecare cicli di Clock tenendo in stallo thread vitali durante esecuzioni CPU-intensive o blocchi IO lunghi.
 **Trade-off in Sentinel:** Mentre il RabbitListener scrive il log nativo sul database (veloce), l'attivazione dell'`AnalyticsEngine` per calcolare attacchi complessi (lento) è delegata a un **Thread Pool parallelo**. Questo schema *Leader-Follower* permette al Listener (Leader) di tornare istantaneamente a leggere le code RabbmitMQ, massimizzando il throughput globale d'immissione della rete.
 **Snippet in `EventConsumerService.java`:**
@@ -88,7 +88,7 @@ CompletableFuture.runAsync(() -> {
 
 ## 3. Resilienza e Limiti Strutturali (Resilience4J) 
 
-### `L15_DPresilience.pdf` & `L17_Resilience4J.pdf` (Rate Limiter)
+### `L15_DPresilience` & `L17_Resilience4J` (Rate Limiter)
 
 ```mermaid
 pie title Distribuzione Fisiologica del Rate Limiter
@@ -96,7 +96,7 @@ pie title Distribuzione Fisiologica del Rate Limiter
     "Eccedenze bloccate (DoS)" : 10
 ```
 **Teoria:** L'infrastruttura difensiva deve riconoscere anomalie nel pattern frequenziale e spezzare/negare il surplus limitando dinamicamente il danno per IP. (Sliding Window Algorithm).
-**Trade-off in Sentinel:** Era possibile implementarlo in RAM pura con `HashMap<String, Integer>`, costringendosi però a gestire la putrescenza delle finestre di tempo e le estrazioni lock-safe dei thread. Sfruttiamo invece a fondo la libreria raccomandata `Resilience4j`, che offre un semaforo matematicamente provato.
+**Trade-off in Sentinel:** Era possibile implementarlo in RAM pura con `HashMap<String, Integer>`, costringendosi però a gestire la putrescenza delle finestre di tempo e le estrazioni lock-safe dei thread. L'implementazione sfrutta invece a fondo la libreria raccomandata `Resilience4j`, che offre un semaforo matematicamente provato.
 **Snippet in `AnalyticsService.java`:**
 ```java
 RateLimiter dosLimiter = rateLimiterRegistry.rateLimiter("dos-" + sourceIp, "dos");
@@ -105,7 +105,7 @@ if (!dosLimiter.acquirePermission()) {
 }
 ```
 
-### `L16_CircuitBreaker.pdf` (Circuit Breaker)
+### `L16_CircuitBreaker` (Circuit Breaker)
 **Teoria:** Un servizio interrotto (o un DataBase in Timeout) deve essere evitato fallendo velocemente senza monopolizzare tutti i timeout di connessione dell'app.
 **Implementazione in Sentinel:** Posto sulle rotte di esportazione dei report aggregati (processi esosi). Se il layer `Storage` soffre, restituisce Subito Report Vuoti/Pieni invece di propagare un disservizio 500 al client.
 ```java
@@ -117,7 +117,7 @@ public DailyReport getHugeReportFromDB() { ... }
 
 ## 4. Astrazioni Architetturali e Presentazione
 
-### `L5_RemoteFacadeDTO.pdf` (Remote Facade & DTO)
+### `L5_RemoteFacadeDTO` (Remote Facade & DTO)
 **Teoria:** Il network remoto è esponenzialmente più lento del network locale server-side. Spostare i dati a blocchi enormi incapsulati in `DTO` riduce il Chatty Traffic e l'Overhead Protocollo.
 **Implementazione in Sentinel:** Nel front-end React, ricaricare il cruscotto avrebbe richiesto: (1) Call per lo status DB, (2) Call per lo status MQ, (3) Call per allarmi recenti, (4) Call per il traffico orario totale.
 La *Remote Facade* unifica le logiche lato server fornendo un oggetto compositivo massiccio scambiato tramite una singola chiamata REST.
@@ -134,10 +134,10 @@ public DashboardSummaryDTO getFullStatus() {
 }
 ```
 
-### `L11_RequestBatch.txt` (Request Batch)
+### `L11_RequestBatch` (Request Batch)
 **Teoria:** Ottimizza indagini multiple accorpando singole richieste separate per tagliare il tempo speso per lo scuotimento di mano a livello protocollo ed espandere parallelismo DB e CPU cache hit rates.
 **Implementazione in Sentinel:** Quando un analista isola 50 macchine sospette nel SIEM sul frontend, non scatena un `foreach(...)` inviando 50 POST separate. Ne trasmette 1 massiva inglobata (`[ "10.0.0.1", "10.0.0.2" ]`). La logica di *Data Access* esegue una sola query SQL (`WHERE ip IN (...)`), risolvendo il vizio micidiale delle N+1 Queries.
 
-### `L6_SessionStateSLOB.pdf` (Session State & Serialized LOB)
+### `L6_SessionStateSLOB` (Session State & Serialized LOB)
 **Teoria:** Lo strato documentale è spesso un'estensione scomoda dei database relazionali per via dell'entropia delle configurazioni, evitate creando strutture super-normalizzate inutili (Joined EAV), preferite Serializzazioni Binary Json.
-**Implementazione in Sentinel:** I Layout del cruscotto dell'investigatore (Session State - bozze incomplete) e la stampa immutabile mensile (DailyReport - storico compresso) ignorano la rigidità Relazionale. L'applicaizone invia un intero albero JSON alla colonna `JSONB` di PostgreSQL, sfruttando performance analoghe a MongoDB ma mantenendo le transazioni ACID inossidabili.
+**Implementazione in Sentinel:** I Layout del cruscotto dell'investigatore (Session State - bozze incomplete) e la stampa immutabile mensile (DailyReport - storico compresso) ignorano la rigidità Relazionale. L'applicazione invia un intero albero JSON alla colonna `JSONB` di PostgreSQL, sfruttando performance analoghe a MongoDB ma mantenendo le transazioni ACID inossidabili.
