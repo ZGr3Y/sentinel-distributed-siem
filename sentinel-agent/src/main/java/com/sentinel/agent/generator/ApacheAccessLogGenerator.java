@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 
 @Component
 public class ApacheAccessLogGenerator implements LogGenerator {
@@ -57,25 +58,26 @@ public class ApacheAccessLogGenerator implements LogGenerator {
             case 1: // DoS Attack (150 reqs to drastically exceed 100 req/min)
                 for (int i = 0; i < 150; i++) {
                     attackQueue.add(EventDTO.builder()
+                            .eventId(UUID.randomUUID().toString()) // NATIVE IDEMPOTENCY
                             .timestamp(LocalDateTime.now()) 
                             .sourceIp(attackerIp)
                             .method("GET")
                             .endpoint(generateNormalEndpoint())
                             .statusCode(200)
-                            // Use i in bytes to guarantee 100% unique DB hashes, bypassing idempotency filter dropping packets
-                            .bytes(500L + i) 
+                            .bytes(faker.number().numberBetween(500L, 2000L)) 
                             .build());
                 }
                 break;
             case 2: // Brute Force (20 reqs to /login to safely exceed 10 fail/min)
                 for (int i = 0; i < 20; i++) {
                     attackQueue.add(EventDTO.builder()
+                            .eventId(UUID.randomUUID().toString())
                             .timestamp(LocalDateTime.now())
                             .sourceIp(attackerIp)
                             .method("POST")
                             .endpoint("/login")
                             .statusCode(faker.options().option(401, 403))
-                            .bytes(100L + i) // Guarantee unique hash
+                            .bytes(faker.number().numberBetween(100L, 300L))
                             .build());
                 }
                 break;
@@ -86,6 +88,7 @@ public class ApacheAccessLogGenerator implements LogGenerator {
                         "/admin/config?exec=/bin/sh"
                 };
                 attackQueue.add(EventDTO.builder()
+                        .eventId(UUID.randomUUID().toString())
                         .timestamp(LocalDateTime.now())
                         .sourceIp(attackerIp)
                         .method("GET")
@@ -100,6 +103,7 @@ public class ApacheAccessLogGenerator implements LogGenerator {
     private EventDTO generateNormalTraffic() {
         String ip = normalUserIps.get(faker.number().numberBetween(0, normalUserIps.size()));
         return EventDTO.builder()
+                .eventId(UUID.randomUUID().toString())
                 .timestamp(LocalDateTime.now())
                 .sourceIp(ip)
                 .method(faker.options().option("GET", "POST", "PUT", "DELETE", "HEAD"))

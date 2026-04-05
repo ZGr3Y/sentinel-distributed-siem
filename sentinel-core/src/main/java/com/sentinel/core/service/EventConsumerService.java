@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.sentinel.common.domain.dto.EventDTO;
 import com.sentinel.common.domain.entity.RawEvent;
-import com.sentinel.common.util.HashUtils;
+import java.util.UUID;
 import com.sentinel.core.repository.RawEventRepository;
 
 @Service
@@ -36,8 +36,11 @@ public class EventConsumerService {
     @RabbitListener(queues = "${sentinel.queue.ingress}")
     public void consumeEvent(EventDTO dto) {
         try {
-            // 1. Indempotency Check: Recalculate hash to ensure data integrity
-            String eventHash = HashUtils.calculateEventHash(dto);
+            // 1. Indempotency Check: Trust the native UUID provided by the Agent
+            String rawEventId = dto.getEventId();
+            final String eventHash = (rawEventId == null || rawEventId.isEmpty()) 
+                                     ? UUID.randomUUID().toString() 
+                                     : rawEventId;
 
             // 2. Map DTO to Entity
             RawEvent event = new RawEvent();

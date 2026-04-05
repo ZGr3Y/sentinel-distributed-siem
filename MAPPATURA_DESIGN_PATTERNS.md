@@ -63,12 +63,13 @@ public void processMessage(EventDTO event) {
 
 ### `L11_IdempotentReceiver` (Idempotent Receiver)
 **Teoria:** I broker di messaggistica garantiscono per natura *At-Least-Once Delivery*. Un riavvio di rete comporterebbe messaggi fantasma duplicati, avvelenando i grafici del SIEM con finti report raddoppiati.
-**Trade-off in Sentinel:** Il sistema ignora l'ID dell'Agent ma computa proattivamente una funzione Hash (SHA-256) per sigillare deterministicamente gli attributi del log IP/Tempo. La delega di questo Pattern al Database (`UNIQUE CONSTRAINT`) protegge l'aggregazione matematica senza inquinare il server Java di stati distribuiti inconsistenti.
-**Snippet in `HashUtils.java` e check atomico:**
+**Trade-off in Sentinel:** L'Agent genera un `UUIDv4` crittograficamente univoco alla nascita del log. La delega di questo Pattern al Database (`UNIQUE CONSTRAINT`) protegge l'aggregazione matematica da rimbalzi di rete (Redelivery), senza applicare barriere artificiali ai log identici ma temporalmente/logisticamente intesi come separati.
+**Snippet e check atomico:**
 ```java
-String hash = HashUtils.calculateEventHash(event); // SHA-256
-if (rawEventRepository.existsByEventHash(hash)) {
-    log.warn("Duplicato intercettato e scartato silente per Idempotenza.");
+String eventId = dto.getEventId();
+// UUID generato alla fonte dall'Agent (es. UUID.randomUUID())
+if (rawEventRepository.existsByEventHash(eventId)) {
+    log.warn("Duplicato intercettato per Idempotenza.");
     return; 
 }
 ```

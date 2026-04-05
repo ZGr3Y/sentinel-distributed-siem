@@ -3,7 +3,6 @@ package com.sentinel.agent.engine;
 import com.sentinel.agent.generator.LogGenerator;
 import com.sentinel.agent.producer.LogProducer;
 import com.sentinel.common.domain.dto.EventDTO;
-import com.sentinel.common.util.HashUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +43,6 @@ public class GeneratorEngine {
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     EventDTO event = logGenerator.generateLog();
-                    event.setEventId(HashUtils.calculateEventHash(event));
 
                     producer.sendEvent(event);
 
