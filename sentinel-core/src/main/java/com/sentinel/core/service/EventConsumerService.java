@@ -7,11 +7,14 @@ import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
+import com.rabbitmq.client.Channel;
 import com.sentinel.common.domain.dto.EventDTO;
 import com.sentinel.common.domain.entity.RawEvent;
 import java.util.UUID;
@@ -34,7 +37,7 @@ public class EventConsumerService {
     }
 
     @RabbitListener(queues = "${sentinel.queue.ingress}")
-    public void consumeEvent(EventDTO dto) {
+    public void consumeEvent(EventDTO dto, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
             // 1. Indempotency Check: Trust the native UUID provided by the Agent
             String rawEventId = dto.getEventId();
@@ -50,8 +53,6 @@ public class EventConsumerService {
             // Map DTO endpoint to RawEvent requestPath
             event.setRequestPath(dto.getEndpoint());
             event.setStatusCode(dto.getStatusCode());
-            // Note: method and bytes are not mapped because RawEvent entity
-            // doesn't have them based on the current schema in common module
 
             // 3. Severity Classification Rule Engine
             String severity = classifySeverity(dto);
@@ -62,23 +63,40 @@ public class EventConsumerService {
             repository.save(event);
             log.info("Processed and saved event: {}", eventHash);
 
-            // 5. Analytics & Threat Detection (Non-blocking, Asynchronous via
-            // CompletableFuture
-            // - Design Pattern 2.5)
+            // 5. Analytics & Threat Detection (Non-blocking, Asynchronous)
+            // Manual Ack is sent ONLY AFTER analytics completion to ensure Zero Data Loss.
             CompletableFuture.runAsync(() -> {
                 try {
                     analyticsService.analyzeEvent(dto);
+                    // SUCCESS: Acknowledge the message (it will be removed from queue)
+                    channel.basicAck(deliveryTag, false);
                 } catch (Exception e) {
-                    log.error("Error during asynchronous analytics processing for event: {}", eventHash, e);
+                    log.error("Error during asynchronous analytics processing for event: {}. Requeuing.", eventHash, e);
+                    try {
+                        // FAILURE: Nack and requeue so another consumer (or this one) can try again
+                        channel.basicNack(deliveryTag, false, true);
+                    } catch (Exception nackEx) {
+                        log.error("Failed to send NACK for event: {}", eventHash, nackEx);
+                    }
                 }
             }, analyticsExecutor);
 
         } catch (DataIntegrityViolationException e) {
-            log.warn("Duplicate event discarded: {}. Cause: {}", dto.getEventId(),
-                    e.getMostSpecificCause().getMessage());
+            log.warn("Duplicate event discarded: {}. Sending Ack to clear queue.", dto.getEventId());
+            try {
+                // Duplicate at DB level means it was already processed, safe to Ack.
+                channel.basicAck(deliveryTag, false);
+            } catch (Exception ackEx) {
+                log.error("Failed to send Ack for duplicate event: {}", dto.getEventId(), ackEx);
+            }
         } catch (Exception e) {
-            log.error("Failed to process event: {}", e.getMessage(), e);
-            throw e; // Nack message back to queue
+            log.error("Critical error processing event: {}. Requesting requeue.", e.getMessage(), e);
+            try {
+                // Unexpected error: requeue to prevent data loss.
+                channel.basicNack(deliveryTag, false, true);
+            } catch (Exception nackEx) {
+                log.error("Failed to send NACK after exception", nackEx);
+            }
         }
     }
 

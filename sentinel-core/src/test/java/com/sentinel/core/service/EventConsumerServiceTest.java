@@ -12,7 +12,10 @@ import java.time.LocalDateTime;
 import java.util.concurrent.Executor;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
+
+import com.rabbitmq.client.Channel;
 
 @ExtendWith(MockitoExtension.class)
 class EventConsumerServiceTest {
@@ -22,6 +25,9 @@ class EventConsumerServiceTest {
 
     @Mock
     private AnalyticsService analyticsService;
+
+    @Mock
+    private Channel channel;
 
     private EventConsumerService service;
 
@@ -44,7 +50,9 @@ class EventConsumerServiceTest {
                 .bytes(1024L)
                 .build();
 
-        service.consumeEvent(dto);
+        long deliveryTag = 1L;
+
+        service.consumeEvent(dto, channel, deliveryTag);
 
         verify(repository).save(any());
         verify(analyticsService).analyzeEvent(any(EventDTO.class));
@@ -61,7 +69,9 @@ class EventConsumerServiceTest {
                 .bytes(0L)
                 .build();
 
-        service.consumeEvent(dto);
+        long deliveryTag = 2L;
+
+        service.consumeEvent(dto, channel, deliveryTag);
 
         verify(repository).save(argThat(event -> "CRITICAL".equals(event.getSeverity())));
     }
@@ -77,7 +87,9 @@ class EventConsumerServiceTest {
                 .bytes(0L)
                 .build();
 
-        service.consumeEvent(dto);
+        long deliveryTag = 3L;
+
+        service.consumeEvent(dto, channel, deliveryTag);
 
         verify(repository).save(argThat(event -> "WARNING".equals(event.getSeverity())));
     }
@@ -93,7 +105,9 @@ class EventConsumerServiceTest {
                 .bytes(1024L)
                 .build();
 
-        service.consumeEvent(dto);
+        long deliveryTag = 4L;
+
+        service.consumeEvent(dto, channel, deliveryTag);
 
         verify(repository).save(argThat(event -> "INFO".equals(event.getSeverity())));
     }

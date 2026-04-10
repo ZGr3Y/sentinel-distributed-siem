@@ -75,14 +75,20 @@ if (rawEventRepository.existsByEventHash(eventId)) {
 ```
 
 ### `L11_JavaCompletable` (Asynchronous Execution Threading)
-**Teoria:** Non sprecare cicli di Clock tenendo in stallo thread vitali durante esecuzioni CPU-intensive o blocchi IO lunghi.
-**Trade-off in Sentinel:** Mentre il RabbitListener scrive il log nativo sul database (veloce), l'attivazione dell'`AnalyticsEngine` per calcolare attacchi complessi (lento) è delegata a un **Thread Pool parallelo**. Questo schema *Leader-Follower* permette al Listener (Leader) di tornare istantaneamente a leggere le code RabbmitMQ, massimizzando il throughput globale d'immissione della rete.
+**Trade-off in Sentinel:** Mentre il RabbitListener scrive il log nativo sul database (veloce), l'attivazione dell'`AnalyticsEngine` per calcolare attacchi complessi (lento) è delegata a un **Thread Pool parallelo**. 
+
+Per garantire lo standard **Zero Message Loss**, è stato disattivato l'Auto-Ack di Spring. Il segnale di conferma (`basicAck`) viene inviato manualmente solo all'interno della `CompletableFuture`, assicurando che RabbitMQ mantenga il messaggio in coda finché l'analisi non è terminata con successo. In caso di crash del thread asincrono, il messaggio subisce un `basicNack` con *requeue=true*, garantendo il principio di **At-Least-Once Processing**.
+
 **Snippet in `EventConsumerService.java`:**
 ```java
-// Il thread AMQP passa oltre istantaneamente senza attendere L'Analytics
 CompletableFuture.runAsync(() -> {
-    analyticsService.analyzeEvent(event);
-});
+    try {
+        analyticsService.analyzeEvent(dto);
+        channel.basicAck(deliveryTag, false); // Conferma solo a fine analisi
+    } catch (Exception e) {
+        channel.basicNack(deliveryTag, false, true); // Re-queue in caso di errore
+    }
+}, analyticsExecutor);
 ```
 
 ---
