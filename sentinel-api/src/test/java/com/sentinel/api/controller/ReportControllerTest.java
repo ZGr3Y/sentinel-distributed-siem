@@ -1,6 +1,7 @@
 package com.sentinel.api.controller;
 
 import com.sentinel.api.service.ReportService;
+import com.sentinel.api.security.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ class ReportControllerTest {
 
     @MockBean
     private ReportService reportService;
+
+    @MockBean
+    private JwtUtils jwtUtils;
 
     @Test
     void testGetDailyReport_ReturnsOk() throws Exception {

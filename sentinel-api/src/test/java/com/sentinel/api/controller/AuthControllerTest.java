@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -52,7 +53,7 @@ class AuthControllerTest {
         scryptHash = SCryptUtil.scrypt("securePassword", 16384, 8, 1);
         
         validUser = new User();
-        validUser.setId("usr-123");
+        ReflectionTestUtils.setField(validUser, "id", "usr-123");
         validUser.setUsername("admin");
         validUser.setPasswordHash(scryptHash);
         validUser.setRole("ADMIN");

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sentinel.api.service.InvestigationService;
 import com.sentinel.common.domain.dto.request.BatchQueryRequest;
 import com.sentinel.common.domain.dto.response.BatchQueryResponse;
+import com.sentinel.api.security.JwtUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -34,6 +35,9 @@ class InvestigationControllerTest {
     @MockBean
     private InvestigationService investigationService;
 
+    @MockBean
+    private JwtUtils jwtUtils;
+
     private BatchQueryRequest validRequest;
     private BatchQueryResponse mockResponse;
 
@@ -51,7 +55,7 @@ class InvestigationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.processedCount").value(2));
+                .andExpect(jsonPath("$.totalIpsQueried").value(2));
     }
 
     @Test

@@ -16,7 +16,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,8 +46,8 @@ class InvestigationServiceTest {
 
         // Assert
         assertNotNull(response);
-        assertEquals(0, response.getProcessedCount());
-        assertTrue(response.getResultsByIp().isEmpty());
+        assertEquals(0, response.getTotalIpsQueried());
+        assertTrue(response.getIpAlertsMap().isEmpty());
         verifyNoInteractions(alertRepository);
     }
 
@@ -62,8 +61,8 @@ class InvestigationServiceTest {
 
         // Assert
         assertNotNull(response);
-        assertEquals(0, response.getProcessedCount());
-        assertTrue(response.getResultsByIp().isEmpty());
+        assertEquals(0, response.getTotalIpsQueried());
+        assertTrue(response.getIpAlertsMap().isEmpty());
         verifyNoInteractions(alertRepository);
     }
 
@@ -80,19 +79,19 @@ class InvestigationServiceTest {
 
         // Assert
         assertNotNull(response);
-        assertEquals(3, response.getProcessedCount());
-        assertEquals(3, response.getResultsByIp().size());
+        assertEquals(3, response.getTotalIpsQueried());
+        assertEquals(3, response.getIpAlertsMap().size());
 
         // IPs with alerts
-        assertEquals(1, response.getResultsByIp().get("192.168.1.100").size());
-        assertEquals("DOS", response.getResultsByIp().get("192.168.1.100").get(0).getAlertType());
-        
-        assertEquals(1, response.getResultsByIp().get("10.0.0.5").size());
-        assertEquals("BRUTE_FORCE", response.getResultsByIp().get("10.0.0.5").get(0).getAlertType());
+        assertEquals(1, response.getIpAlertsMap().get("192.168.1.100").size());
+        assertEquals("DOS", response.getIpAlertsMap().get("192.168.1.100").get(0).getType());
+
+        assertEquals(1, response.getIpAlertsMap().get("10.0.0.5").size());
+        assertEquals("BRUTE_FORCE", response.getIpAlertsMap().get("10.0.0.5").get(0).getType());
 
         // IP with no alerts should be present but empty
-        assertTrue(response.getResultsByIp().get("127.0.0.1").isEmpty());
-        
+        assertTrue(response.getIpAlertsMap().get("127.0.0.1").isEmpty());
+
         verify(alertRepository, times(1)).findBySourceIpIn(ips);
     }
 }
