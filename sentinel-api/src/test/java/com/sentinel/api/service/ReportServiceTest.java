@@ -2,7 +2,7 @@ package com.sentinel.api.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sentinel.api.dto.DashboardSummaryDTO;
+import com.sentinel.common.domain.dto.DashboardSummaryDTO;
 import com.sentinel.api.repository.DailyReportRepository;
 import com.sentinel.common.domain.entity.DailyReport;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +41,7 @@ class ReportServiceTest {
     void setUp() {
         existingReport = new DailyReport(LocalDate.now(), "{\"date\": \"" + LocalDate.now().toString() + "\", \"status\": \"OK\"}");
         mockSummary = new DashboardSummaryDTO();
-        mockSummary.setTotalAlerts(10);
-        mockSummary.setActiveInvestigations(2);
+        mockSummary.setTotalAlerts(10L);
     }
 
     @Test
