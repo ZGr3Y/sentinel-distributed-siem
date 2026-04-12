@@ -42,6 +42,7 @@ class ReplayEngineTest {
     @BeforeEach
     void setUp() throws IOException {
         ReflectionTestUtils.setField(replayEngine, "speedupFactor", 1000);
+        ReflectionTestUtils.setField(replayEngine, "logFile", logFile);
         
         event1 = new EventDTO();
         event1.setTimestamp(LocalDateTime.of(1995, 7, 1, 0, 0, 1));
