@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public class EventDTO {
 
     private String eventId; // The SHA-256 Hash
+    private String eventType;
     private String sourceIp;
     private LocalDateTime timestamp;
     private String method;
