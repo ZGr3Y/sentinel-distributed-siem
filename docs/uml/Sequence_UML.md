@@ -7,37 +7,41 @@ Shows the chronological interaction between components.
 ```mermaid
 sequenceDiagram
     participant Agent as Sentinel Agent
-    participant RMQ as RabbitMQ (sentinel.direct)
-    participant Core as Sentinel Core
-    participant DB as PostgreSQL (raw_events)
-    participant Async as Async Executor
-    participant AlertDB as PostgreSQL (alerts)
+    participant RMQ as RabbitMQ
+    participant Core as EventConsumerService
+    participant RawDB as PostgreSQL raw_events
+    participant Async as Analytics Executor
+    participant AlertDB as PostgreSQL alerts
 
-    Agent->>Agent: Read & Parse Log Line
-    Agent->>RMQ: basicPublish(EventDTO)
-    RMQ-->>Core: @RabbitListener Delivery
-    
-    Core->>Core: Re-hash & Classify Severity
-    Core->>DB: repository.save(RawEvent)
-    
-    alt UNIQUE constraint violated
-        DB-->>Core: DataIntegrityViolationException
-        Core->>Core: log.warn("Duplicate discarded")
-    else New Event
-        DB-->>Core: Saved OK
-        Core->>Async: runAsync(AnalyticsService.analyzeEvent)
-        
-        par Threat Detection
-            Async->>Async: Evaluate DOS RateLimiter
-        and
-            Async->>Async: Evaluate Brute Force RateLimiter
-        and
-            Async->>Async: Evaluate Payload Signatures
+    Agent->>RMQ: basicPublish(EventDTO with eventId UUID)
+    RMQ-->>Core: @RabbitListener delivery
+
+    Core->>Core: Map DTO and classify severity
+    Core->>RawDB: save(RawEvent)
+
+    alt Duplicate event (unique constraint violation)
+        RawDB-->>Core: DataIntegrityViolationException
+        Core->>RMQ: basicAck(deliveryTag)
+    else New event persisted
+        RawDB-->>Core: Save OK
+        Core->>Async: runAsync(analyzeEvent)
+
+        Async->>Async: Evaluate DOS/BRUTE_FORCE/PATTERN rules
+        opt Alert condition met
+            Async->>AlertDB: save(Alert)
         end
-        
-        alt Threshold Exceeded
-            Async->>AlertDB: repository.save(Alert)
+
+        alt Analytics success
+            Async-->>Core: Completed
+            Core->>RMQ: basicAck(deliveryTag)
+        else Analytics exception
+            Async-->>Core: Exception
+            Core->>RMQ: basicNack(deliveryTag, requeue=true)
         end
+    end
+
+    opt Unexpected processing exception before async stage
+        Core->>RMQ: basicNack(deliveryTag, requeue=true)
     end
 ```
 
@@ -45,28 +49,39 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    actor Admin
+    actor User
     participant UI as React Dashboard
-    participant API as Sentinel API
-    participant DB as PostgreSQL (users)
+    participant API as AuthController
+    participant UsersDB as PostgreSQL users
     participant Crypto as SCryptUtil
-    participant JWT as JwtProvider
+    participant JwtUtils as JwtUtils
+    participant Security as JwtAuthenticationFilter
 
-    Admin->>UI: Submit credentials
-    UI->>API: POST /auth/login {username, password}
-    
-    API->>API: RateLimiter Check
-    
-    API->>DB: findByUsername()
-    DB-->>API: User (Hash, Role)
-    
-    API->>Crypto: verify(password, hash)
-    Crypto-->>API: valid = true
-    
-    API->>JWT: generateToken(User)
-    JWT-->>API: Signed JWT String
-    
-    API-->>UI: 200 OK + {token, role}
-    UI->>UI: Save to localStorage
-    UI-->>Admin: Render Dashboard View
+    User->>UI: Submit username and password
+    UI->>API: POST /auth/login
+
+    API->>API: RateLimiterFilter check
+    alt Rate limit exceeded
+        API-->>UI: 429 Too Many Requests
+    else Allowed
+        API->>UsersDB: findByUsername(username)
+
+        alt User not found
+            API-->>UI: 401 Invalid credentials
+        else User found
+            API->>Crypto: check(password, passwordHash)
+
+            alt Password invalid
+                API-->>UI: 401 Invalid credentials
+            else Password valid
+                API->>JwtUtils: generateToken(userId, role)
+                JwtUtils-->>API: signed JWT
+                API-->>UI: 200 token, userId, role
+
+                UI->>UI: Store token in localStorage
+                UI->>Security: Call protected API with Bearer token
+                Security-->>UI: Request authenticated
+            end
+        end
+    end
 ```

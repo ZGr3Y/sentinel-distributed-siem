@@ -1,6 +1,6 @@
 # Sentinel SIEM - Class Diagram
 
-This diagram illustrates the core domain model, entities, enums, data transfer objects, and the primary services that handle them.
+This diagram mirrors the as-built domain model, DTOs, and core services.
 
 ```mermaid
 classDiagram
@@ -11,47 +11,50 @@ classDiagram
         +String sourceIp
         +String requestPath
         +Integer statusCode
-        +Severity severity
+        +String severity
         +LocalDateTime ingestedAt
     }
-    
+
     class Alert {
-        +Long id
-        +AlertType alertType
+        +String id
+        +String type
         +String sourceIp
         +String description
         +LocalDateTime createdAt
     }
-    
+
     class User {
-        +Long id
+        +String id
         +String username
         +String passwordHash
         +String role
+        +LocalDateTime createdAt
     }
-    
+
     class DailyReport {
+        +String id
         +LocalDate reportDate
-        +String reportJson
+        +String reportData
     }
 
     class DraftState {
         +String id
-        +String stateJson
+        +String userId
+        +String draftPayload
         +LocalDateTime updatedAt
     }
-    
-    %% Enums
+
+    %% Conceptual enums (defined in codebase, values used as strings in entities)
     class Severity {
         <<enumeration>>
         INFO
         WARNING
         CRITICAL
     }
-    
+
     class AlertType {
         <<enumeration>>
-        DOS_ATTACK
+        DOS
         BRUTE_FORCE
         PATTERN_MATCH
     }
@@ -59,25 +62,33 @@ classDiagram
     %% DTOs
     class EventDTO {
         +String eventId
+        +String eventType
         +String sourceIp
+        +LocalDateTime timestamp
         +String method
         +String endpoint
         +Integer statusCode
+        +Long bytes
         +String severity
-        +LocalDateTime timestamp
-        +Integer bytes
     }
-    
+
     class DashboardSummaryDTO {
         +Map~String, String~ systemHealth
-        +MetricsDTO metrics
+        +long totalEvents
+        +long totalAlerts
+        +long dosAttacks
+        +long bruteForceAttacks
         +List~AlertDTO~ latestAlerts
     }
 
-    %% Relationships
-    RawEvent --> Severity : has
-    Alert --> AlertType : has
-    
+    class AlertDTO {
+        +String id
+        +String type
+        +String sourceIp
+        +String description
+        +String createdAt
+    }
+
     %% Core Services
     class AnalyticsService {
         -AlertRepository alertRepository
@@ -87,16 +98,17 @@ classDiagram
         -checkBruteForce(EventDTO event)
         -checkPatternMatch(EventDTO event, String sourceIp)
     }
-    
+
     class EventConsumerService {
-        -RawEventRepository eventRepository
+        -RawEventRepository repository
         -AnalyticsService analyticsService
-        +processMessage(EventDTO event)
-        -classifySeverity(EventDTO event) Severity
+        +consumeEvent(EventDTO dto, Channel channel, long deliveryTag)
+        -classifySeverity(EventDTO dto) String
     }
-    
-    %% Dependencies
-    EventConsumerService ..> RawEvent : mapping
-    EventConsumerService --> AnalyticsService : calls asynchronously
-    AnalyticsService ..> Alert : creates
+
+    %% Relationships
+    DashboardSummaryDTO o-- AlertDTO : contains
+    EventConsumerService ..> RawEvent : maps and saves
+    EventConsumerService --> AnalyticsService : runs async analysis
+    AnalyticsService ..> Alert : creates and persists
 ```
