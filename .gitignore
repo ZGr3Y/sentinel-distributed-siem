@@ -40,3 +40,8 @@ sentinel-agent/src/main/resources/data/
 
 # Local Copilot workspace instructions
 .github/copilot-instructions.md
+
+# Academic/study materials (future files only; currently tracked files remain tracked)
+Slides/
+artifacts/*.resolved
+GUIDA_ESAME_SENTINEL.md
