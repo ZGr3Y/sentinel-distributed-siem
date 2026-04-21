@@ -16,9 +16,9 @@ Il presente documento definisce i requisiti funzionali e non funzionali per il s
 
 ## **2\. Requisiti Funzionali (Granulari)**
 
-### **2.1 Modulo Agent (Simulatore Sorgente)**
+### **2.1 Modulo Agent (Source Log Simulator)**
 
-* **REQ-AG-01 (Lettura Streaming):** L'Agent **deve** leggere il dataset (NASA KSC HTTP Log) riga per riga utilizzando uno Stream\<String\> Java, garantendo un'occupazione di memoria costante O(1) indipendentemente dalla dimensione del file.  
+* **REQ-AG-01 (Modalità Storica - Lettura Streaming):** Quando in modalità `replay`, l'Agent **deve** leggere set di dati storici (es. NASA KSC) riga per riga utilizzando uno Stream\<String\> Java, garantendo un'occupazione di memoria costante O(1).  
 * **REQ-AG-02 (Parsing & Normalizzazione):** L'Agent **deve** parsare ogni riga ASCII ed estrarre i seguenti campi, gestendo errori di formattazione scartando righe malformate (Fail-Safe):  
   * sourceIp (String)  
   * timestamp (Originale)  
@@ -30,6 +30,7 @@ Il presente documento definisce i requisiti funzionali e non funzionali per il s
 * **REQ-AG-04 (Attesa Attiva):** Se \\Delta t \> 0, l'Agent **deve** sospendere l'esecuzione per \\Delta t millisecondi prima di inviare E\_{n+1}.  
 * **REQ-AG-05 (Generazione Hash ID):** L'Agent **deve** calcolare l'hash SHA-256 della stringa grezza del log e assegnarlo al campo eventId del DTO.  
 * **REQ-AG-06 (Invio Asincrono):** L'Agent **deve** pubblicare l'evento normalizzato (DTO JSON) sull'Exchange RabbitMQ sentinel.direct con routing key log.ingress.
+* **REQ-AG-07 (Modalità Attiva - Generazione Dinamica):** Quando in modalità `generate`, l'Agent **deve** abbandonare il file storico per simulare traffico background sintetico su cui iniettare programmaticamente ondate di attacchi volumetrici e payload (Pattern Match, Brute Force, DoS) eludendo in modo trasparente i normali filtri di idempotenza per testare le difese del Core.
 
 ### **2.2 Modulo Core (Ingestion & Processing)**
 
@@ -46,6 +47,7 @@ Il presente documento definisce i requisiti funzionali e non funzionali per il s
 * **REQ-AN-01 (Sliding Window Per-IP):** Il sistema **deve** mantenere in memoria una finestra mobile di 60 secondi per ogni IP sorgente attivo.  
 * **REQ-AN-02 (Detection DOS):** Se il numero di richieste in finestra per un IP \> 100, il sistema **deve** generare un Alert di tipo DOS\_ATTACK.  
 * **REQ-AN-03 (Detection Brute Force):** Se il numero di risposte con statusCode 401/403 in finestra per un IP \> 10, il sistema **deve** generare un Alert di tipo BRUTE\_FORCE.
+* **REQ-AN-04 (Pattern Match Detection):** Se la gravità dell'evento in ingresso è classificata come CRITICAL, il sistema **deve** generare immediatamente un Alert di tipo PATTERN\_MATCH.
 
 ### **2.4 Modulo API & Pattern**
 

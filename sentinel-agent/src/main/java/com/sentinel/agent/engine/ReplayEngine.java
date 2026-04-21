@@ -3,7 +3,6 @@ package com.sentinel.agent.engine;
 import com.sentinel.agent.parser.NasaLogParser;
 import com.sentinel.agent.producer.LogProducer;
 import com.sentinel.common.domain.dto.EventDTO;
-import com.sentinel.common.util.HashUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +10,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -77,8 +78,8 @@ public class ReplayEngine {
 
                 lastLogTime = event.getTimestamp();
 
-                // Generate Event ID (Hash)
-                event.setEventId(HashUtils.calculateEventHash(event));
+                // Generate Event ID (UUID v4)
+                event.setEventId(UUID.randomUUID().toString());
 
                 // Update Timestamp to CURRENT REPLAY TIME
                 // (Crucial for Sliding Window Analytics down the pipeline)

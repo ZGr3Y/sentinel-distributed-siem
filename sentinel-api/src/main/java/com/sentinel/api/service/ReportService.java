@@ -80,7 +80,7 @@ public class ReportService {
      * Fallback method triggered when the Circuit Breaker is OPEN.
      */
     public String fallbackGetReport(Exception e) {
-        log.warn("🔄 Circuit Breaker OPEN! Fallback activated for getDailyReport(). Reason: {}", e.getMessage());
+        log.warn("Circuit Breaker OPEN! Fallback activated for getDailyReport(). Reason: {}", e.getMessage());
         return "{\"status\": \"DEGRADED\", \"message\": \"Reporting service is temporarily unavailable due to high load or database disconnect. Please try again later.\"}";
     }
 }

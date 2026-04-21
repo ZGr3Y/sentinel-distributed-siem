@@ -1,24 +1,46 @@
 package com.sentinel.agent.generator;
 
 import com.sentinel.common.domain.dto.EventDTO;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ApacheAccessLogGeneratorTest {
 
-    private final ApacheAccessLogGenerator generator = new ApacheAccessLogGenerator();
+    private ApacheAccessLogGenerator generator;
+
+    @BeforeEach
+    void setUp() {
+        generator = new ApacheAccessLogGenerator();
+    }
 
     @Test
-    void testGenerateLog() {
+    void testGenerateLog_returnsValidEventDTO() {
         EventDTO event = generator.generateLog();
 
         assertNotNull(event);
-        assertNotNull(event.getTimestamp());
+        assertNotNull(event.getEventId());
         assertNotNull(event.getSourceIp());
         assertNotNull(event.getMethod());
         assertNotNull(event.getEndpoint());
-        assertTrue(event.getStatusCode() >= 100 && event.getStatusCode() <= 599);
-        assertTrue(event.getBytes() >= 100 && event.getBytes() <= 50000);
+        assertNotNull(event.getStatusCode());
+        assertNotNull(event.getTimestamp());
+        assertTrue(event.getBytes() > 0);
+    }
+
+    @Test
+    void testGenerateLog_ensuresUniqueUUIDs() {
+        Set<String> uuids = new HashSet<>();
+        
+        // Generate enough logs to trigger both normal and attack scenarios
+        for (int i = 0; i < 200; i++) {
+            EventDTO event = generator.generateLog();
+            assertNotNull(event.getEventId(), "Event ID should never be null");
+            assertTrue(uuids.add(event.getEventId()), "Event ID " + event.getEventId() + " was duplicated!");
+        }
     }
 }

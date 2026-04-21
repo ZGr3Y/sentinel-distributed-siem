@@ -48,8 +48,14 @@ public class DraftController {
 
     private String getUserIdFromContext() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        // Principal is the userId String (set by JwtAuthenticationFilter from JWT
-        // subject)
-        return (String) auth.getPrincipal();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new RuntimeException("No authentication found in security context");
+        }
+        
+        Object principal = auth.getPrincipal();
+        if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+            return ((org.springframework.security.core.userdetails.User) principal).getUsername();
+        }
+        return principal.toString();
     }
 }

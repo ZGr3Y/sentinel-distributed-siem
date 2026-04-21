@@ -10,7 +10,7 @@
 | **Resilience** | io.github.resilience4j:resilience4j-spring-boot3 | 2.1.0 | L17\_Resilience4J.pdf |
 | **Messaging** | org.springframework.amqp:spring-rabbit | 3.1.0 | L16\_Messaging.pdf |
 | **Database** | PostgreSQL JDBC Driver | 42.6.0 | \- |
-| **Parsing** | Java Regex (java.util.regex) | JDK 17 | \- |
+| **Parsing** | Java Regex (java.util.regex) | JDK 21 | \- |
 
 ## **2\. Configurazioni Operative (Properties)**
 
@@ -74,14 +74,32 @@ Algoritmo per garantire la fedeltà temporale della simulazione.
 
 Strategia per garantire *Exactly-Once Processing* (simulato).
 
-1. **Ricezione:** Messaggio JSON arriva dal Broker.  
-2. **Hashing:** Il backend ricalcola l'hash SHA-256 sui campi immutabili (Timestamp Originale, IP, Method, Path, Bytes).  
-   * *Nota:* Non usiamo l'ID generato dall'Agent ciecamente, ricalcolarlo è più sicuro, ma per semplicità accademica ci fidiamo del campo eventId nel DTO se presente.  
-3. **Check-Then-Act (Atomico su DB):**  
+1. **Generazione:** L'Agent assegna proattivamente un `UUID v4` criptograficamente univoco a ogni log (`eventId`).
+2. **Ricezione:** Messaggio JSON arriva dal Broker.  
+3. **Estrazione ID:** Il backend estrae ciecamente il `dto.getEventId()` inviato dall'Agent come primary key naturale.  
+4. **Check-Then-Act (Atomico su DB):**  
    `try {`  
        `repository.save(event); // event_hash ha vincolo UNIQUE su DB`  
    `} catch (DataIntegrityViolationException e) {`  
        `log.warn("Duplicato scartato: " + event.getId());`  
-       `// ACK manuale positivo per rimuoverlo dalla coda`  
+       `// Rimbalzo di rete bloccato silenziosamente`  
    `}`  
-   *Questo approccio sfrutta il DB come "source of truth" per l'idempotenza (Slide L11\_IdempotentReceiver, Soluzione "MessageDB").*
+   *Questo approccio sfrutta il DB come "source of truth" per l'idempotenza (Slide L11\_IdempotentReceiver), impedendo ai reali duplicati di rete di raddoppiare le statistiche o generare doppi allarmi, ma consente a infiniti eventi di business "identici" di essere immessi se dotati di UUID distinti.*
+
+### **3.3 Advanced Attack Simulation (Generative Mode)**
+
+Algoritmo progettato per accertare il funzionamento dei Rate Limiter di Sentinel-Core (DoS e Brute Force).
+
+A differenza dei primi prototipi con filtraggio basato su Hash, l'introduzione di un tracciamento basato su `UUIDv4` permette l'immissione di payload perfettamente identici ad alta velocità senza innescare barriere artificiali di idempotenza e riproducendo 1:1 una frazione d'attacco volumetrico reale.
+
+`// Pseudo-codice`  
+`for (int i = 0; i < 150; i++) {`
+    `attackQueue.add(EventDTO.builder()`
+        `.eventId(UUID.randomUUID().toString()) // Garanzia Anti-Idempotenza`
+        `.timestamp(LocalDateTime.now())` 
+        `.sourceIp(attackerIp)`
+        `.method("GET")`
+        `.endpoint(generateNormalEndpoint())`
+        `.bytes(1500L)` // Payload costante e verosimile
+    `.build());`
+`}`

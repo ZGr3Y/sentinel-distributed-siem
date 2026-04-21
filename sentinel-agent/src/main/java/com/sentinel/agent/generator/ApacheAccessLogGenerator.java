@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.UUID;
 
 @Component
 public class ApacheAccessLogGenerator implements LogGenerator {
@@ -35,8 +36,8 @@ public class ApacheAccessLogGenerator implements LogGenerator {
             return attackQueue.poll();
         }
 
-        // 2% chance to trigger an attack sequence when not currently attacking
-        if (faker.number().numberBetween(1, 100) <= 2) {
+        // 5% chance to trigger an attack sequence when not currently attacking
+        if (faker.number().numberBetween(1, 100) <= 5) {
             injectAttackScenario();
             if (!attackQueue.isEmpty()) {
                 return attackQueue.poll();
@@ -48,25 +49,30 @@ public class ApacheAccessLogGenerator implements LogGenerator {
 
     private void injectAttackScenario() {
         String attackerIp = faker.internet().publicIpV4Address();
-        int scenario = faker.number().numberBetween(1, 4); // 1, 2, or 3
+        
+        // Tuning: 45% chance DoS, 45% Brute Force, 10% Pattern Match
+        int roll = faker.number().numberBetween(1, 100);
+        int scenario = (roll <= 45) ? 1 : (roll <= 90) ? 2 : 3;
 
         switch (scenario) {
-            case 1: // DoS Attack (120 reqs to exceed 100 req/min)
-                for (int i = 0; i < 120; i++) {
+            case 1: // DoS Attack (150 reqs to drastically exceed 100 req/min)
+                for (int i = 0; i < 150; i++) {
                     attackQueue.add(EventDTO.builder()
-                            .timestamp(LocalDateTime.now().plusSeconds(i / 10)) // Simulate slight time variation
+                            .eventId(UUID.randomUUID().toString()) // NATIVE IDEMPOTENCY
+                            .timestamp(LocalDateTime.now()) 
                             .sourceIp(attackerIp)
                             .method("GET")
                             .endpoint(generateNormalEndpoint())
                             .statusCode(200)
-                            .bytes(faker.number().numberBetween(500L, 2000L))
+                            .bytes(faker.number().numberBetween(500L, 2000L)) 
                             .build());
                 }
                 break;
-            case 2: // Brute Force (15 reqs to /login with 401/403 to exceed 10 fail/min)
-                for (int i = 0; i < 15; i++) {
+            case 2: // Brute Force (20 reqs to /login to safely exceed 10 fail/min)
+                for (int i = 0; i < 20; i++) {
                     attackQueue.add(EventDTO.builder()
-                            .timestamp(LocalDateTime.now().plusSeconds(i))
+                            .eventId(UUID.randomUUID().toString())
+                            .timestamp(LocalDateTime.now())
                             .sourceIp(attackerIp)
                             .method("POST")
                             .endpoint("/login")
@@ -82,6 +88,7 @@ public class ApacheAccessLogGenerator implements LogGenerator {
                         "/admin/config?exec=/bin/sh"
                 };
                 attackQueue.add(EventDTO.builder()
+                        .eventId(UUID.randomUUID().toString())
                         .timestamp(LocalDateTime.now())
                         .sourceIp(attackerIp)
                         .method("GET")
@@ -96,6 +103,7 @@ public class ApacheAccessLogGenerator implements LogGenerator {
     private EventDTO generateNormalTraffic() {
         String ip = normalUserIps.get(faker.number().numberBetween(0, normalUserIps.size()));
         return EventDTO.builder()
+                .eventId(UUID.randomUUID().toString())
                 .timestamp(LocalDateTime.now())
                 .sourceIp(ip)
                 .method(faker.options().option("GET", "POST", "PUT", "DELETE", "HEAD"))

@@ -23,6 +23,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(8);
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("analytics-");
+        executor.setDaemon(true); // VERY IMPORTANT FOR TESTS: Prevents JVM hanging on exit
         executor.initialize();
         return executor;
     }

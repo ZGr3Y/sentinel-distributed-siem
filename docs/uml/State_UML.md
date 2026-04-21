@@ -1,41 +1,36 @@
 # Sentinel SIEM - State Machine Diagram
 
-Illustrates the lifecycle states that a parsed log event goes through in its journey from the Agent file reader through the backend architecture.
+Illustrates the implemented lifecycle of an event from Agent publication
+to Core persistence, analytics, and queue acknowledgement.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Parsed : Agent Reads Log Line
-    
-    Parsed --> Queued : Hash Generated & Sent to RabbitMQ
-    
-    Queued --> Ingested : Core Consumes from Queue
-    
-    state Ingested {
-        [*] --> Classifying
-        Classifying --> SavingToDB : Rated (INFO, WARN, CRIT)
-        SavingToDB --> Persisted : Saved Successfully
-        SavingToDB --> Duplicate : DataViolationException
+    [*] --> CreatedByAgent : Replay or generate mode
+    CreatedByAgent --> PublishedToQueue : LogProducer publish EventDTO
+    PublishedToQueue --> ConsumedByCore : RabbitListener delivery
+
+    ConsumedByCore --> Classified : Map DTO and classify severity
+    Classified --> PersistingRawEvent
+
+    PersistingRawEvent --> DuplicateDetected : Unique constraint violation
+    DuplicateDetected --> AckedDuplicate : basicAck
+    AckedDuplicate --> [*]
+
+    PersistingRawEvent --> RawEventPersisted : Save successful
+    RawEventPersisted --> AnalyticsRunning : runAsync(analyzeEvent)
+
+    state AnalyticsRunning {
+        [*] --> CheckingRules
+        CheckingRules --> NoAlert
+        CheckingRules --> AlertDetected
+        AlertDetected --> AlertPersisted : save Alert
     }
-    
-    Ingested --> Discarded : Is Duplicate
-    Discarded --> [*]
-    
-    Ingested --> Analyzing : Is New (CompletableFuture)
-    
-    state Analyzing {
-        [*] --> CheckingDOS
-        [*] --> CheckingBruteForce
-        [*] --> CheckingPattern
-        
-        CheckingDOS --> RateLimitHit : Threshold Exceeded
-        CheckingBruteForce --> RateLimitHit : Threshold Exceeded
-        CheckingPattern --> RuleMatched : Threat Recognized
-    }
-    
-    Analyzing --> Clean : No Anomalies Detected
-    Clean --> [*]
-    
-    Analyzing --> AlertGenerated : Threat Detected
-    AlertGenerated --> AlertPersisted : Saved to DB Alerts Table
-    AlertPersisted --> [*]
+
+    AnalyticsRunning --> AckedAfterAnalytics : basicAck on success
+    AckedAfterAnalytics --> [*]
+
+    AnalyticsRunning --> Requeued : basicNack requeue=true on analytics error
+    Requeued --> [*]
+
+    ConsumedByCore --> Requeued : Unexpected processing exception
 ```
