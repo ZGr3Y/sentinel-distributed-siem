@@ -1,5 +1,22 @@
 # 🛡️ Sentinel Distributed SIEM
 
+<p align="center">
+	<img src="https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
+	<img src="https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 3.x" />
+	<img src="https://img.shields.io/badge/Spring_Security-6-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security 6" />
+	<img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logoColor=white" alt="Spring Data JPA" />
+	<img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven" />
+	<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+	<img src="https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose" />
+	<img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+	<img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" alt="RabbitMQ" />
+	<img src="https://img.shields.io/badge/Resilience4j-2F3134?style=for-the-badge&logoColor=white" alt="Resilience4j" />
+	<img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+	<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+	<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+	<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+</p>
+
 Sentinel is a distributed Security Information and Event Management (SIEM) system designed for real-time log ingestion, analysis, and threat detection. It leverages a modular architecture to scale ingestion and analytics independently.
 
 ## 🏗️ Architecture
@@ -17,15 +34,54 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validaton.
 - Branch Protections mandate that all CI pipelines pass before PRs can be merged into `main` or `develop`.
 
-## 🛠️ Tech Stack
+## 🛠️ Technologies
 
-- **Java 21** (Open JDK)
+### Backend
+
+- **Java 21**
 - **Spring Boot 3**
-- **Node.js & React** (Frontend Dashboard)
-- **RabbitMQ** (Message Broker)
-- **PostgreSQL** (Relational Database)
-- **Resilience4J** (Rate Limiting & Circuit Breakers)
-- **Docker & Docker Compose**
+- **Spring Security 6**
+- **Spring Data JPA**
+- **Spring AMQP**
+- **Resilience4j**
+- **JWT authentication**
+- **Maven**
+
+### Infrastructure
+
+- **Docker**
+- **Docker Compose**
+- **PostgreSQL**
+- **RabbitMQ**
+
+### Frontend
+
+- **React**
+- **TypeScript**
+- **Vite**
+- **Nginx**
+
+### Quality & Testing
+
+- **JUnit 5**
+- **Mockito**
+- **MockMvc**
+- **Spring Boot Test**
+- **JaCoCo**
+
+## 🧠 Techniques
+
+- **Event-driven architecture**: Agent -> RabbitMQ -> Core -> PostgreSQL.
+- **Idempotent receiver**: duplicate events are filtered before persistence.
+- **DTO-based communication**: controllers exchange concise request/response objects.
+- **Rate limiting**: protects the API from excessive requests.
+- **Circuit breaker + fallback**: keeps reporting resilient under failures.
+- **Asynchronous processing**: analysis work runs without blocking ingestion.
+- **Batch query pattern**: investigations query multiple IPs in a single request.
+- **JWT + RBAC**: authentication and role-based access control for the API.
+- **Mock-based unit testing**: services are verified in isolation with Mockito.
+- **Web slice testing**: controller endpoints are tested with MockMvc.
+- **Coverage reporting**: JaCoCo measures executed code paths during test runs.
 
 ## 🚀 Local Deployment
 
