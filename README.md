@@ -1,4 +1,4 @@
-# 🛡️ Sentinel Distributed SIEM
+#  Sentinel Distributed SIEM
 
 <p align="center">
 	<img src="https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
@@ -19,7 +19,7 @@
 
 Sentinel is a distributed Security Information and Event Management (SIEM) system designed for real-time log ingestion, analysis, and threat detection. It leverages a modular architecture to scale ingestion and analytics independently.
 
-## 🏗️ Architecture
+##  Architecture
 
 The project follows a modular Spring Boot architecture:
 
@@ -28,13 +28,13 @@ The project follows a modular Spring Boot architecture:
 - **`sentinel-api`**: REST API layer providing dashboards, investigation endpoints, and statistical reports.
 - **`sentinel-common`**: Shared domain entities, DTOs, and utilities.
 
-## ⚙️ Continuous Integration (CI/CD)
+##  Continuous Integration (CI/CD)
 The project enforces strict code quality and compatibility checks via GitHub Actions:
 - **Backend Pipeline**: Validates compilation on JDK 21 utilizing the native Maven Wrapper (`./mvnw`).
 - **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validaton.
 - Branch Protections mandate that all CI pipelines pass before PRs can be merged into `main` or `develop`.
 
-## 🛠️ Technologies
+##  Technologies
 
 ### Backend
 
@@ -69,7 +69,7 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - **Spring Boot Test**
 - **JaCoCo**
 
-## 🧠 Techniques
+##  Techniques
 
 - **Event-driven architecture**: Agent -> RabbitMQ -> Core -> PostgreSQL.
 - **Idempotent receiver**: duplicate events are filtered before persistence.
@@ -83,7 +83,7 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - **Web slice testing**: controller endpoints are tested with MockMvc.
 - **Coverage reporting**: JaCoCo measures executed code paths during test runs.
 
-## 🚀 Local Deployment
+##  Local Deployment
 
 ### Prerequisites
 - Docker & Docker Compose
@@ -140,7 +140,7 @@ This project was developed as a university course assignment, with a primary foc
 
 The system architecture prioritizes **pattern demonstrations over raw performance**. For example, while a production SIEM would use Redis for rate-limiting and Elasticsearch for log storage, this academic version uses Spring/Resilience4j in-memory structures and PostgreSQL to clearly showcase the implementation of specific design patterns without introducing excessive infrastructural complexity.
 
-### 📊 Applied Design Patterns
+###  Applied Design Patterns
 The following patterns have been explicitly implemented in the codebase:
 
 1. **Messaging (1.8):** Asynchronous decoupling between Agent and Core via RabbitMQ.
