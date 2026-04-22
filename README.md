@@ -31,7 +31,7 @@ The project follows a modular Spring Boot architecture:
 ##  Continuous Integration (CI/CD)
 The project enforces strict code quality and compatibility checks via GitHub Actions:
 - **Backend Pipeline**: Validates compilation on JDK 21 utilizing the native Maven Wrapper (`./mvnw`).
-- **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validaton.
+- **Frontend Pipeline**: Enforces strict Node 20 / React Linter compliance and Production bundle validation.
 - Branch Protections mandate that all CI pipelines pass before PRs can be merged into `main` or `develop`.
 
 ##  Technologies
@@ -89,7 +89,7 @@ The project enforces strict code quality and compatibility checks via GitHub Act
 - Docker & Docker Compose
 - JDK 21 or higher (only for manual development mode)
 - Maven (or use `./mvnw`) (only for manual development mode)
-- Node.js (v18+) & npm (only for manual development mode)
+- Node.js (v20+) & npm (only for manual development mode)
 
 ### Option A: Full Stack via Docker (Recommended)
 Start the entire system (infrastructure + all services) with a single command:
@@ -153,7 +153,7 @@ The following patterns have been explicitly implemented in the codebase:
 8. **Authenticator & RBAC (1.2, 1.5):** JWT-based authentication with Spring Security Role-Based Access Control.
 9. **Serialized LOB:** Storing complex, schema-less report snapshots inside a single database column.
 
-For exact file locations and detailed explanations of how each pattern is coded, please review the dedicated **[DESIGN_PATTERNS.md](DESIGN_PATTERNS.md)** document.
+For exact file locations and detailed explanations of how each pattern is coded, please review the dedicated **[MAPPATURA_DESIGN_PATTERNS.md](MAPPATURA_DESIGN_PATTERNS.md)** document.
 
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
