@@ -130,6 +130,9 @@ npm run dev
 ```
 The dashboard will be available at `http://localhost:5173`.
 
+<img width="1696" height="1377" alt="image" src="https://github.com/user-attachments/assets/2d545036-6d5e-4e68-b9b0-353da8946575" />
+
+
 ### Stopping the Environment
 - Manual mode: press `CTRL+C` in each terminal, then `docker compose down`
 - Docker mode: `docker compose down`
