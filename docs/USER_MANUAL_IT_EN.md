@@ -77,6 +77,9 @@ Reference: [sentinel-api/src/main/java/com/sentinel/api/security/SecurityConfig.
 
 ### 5.1 Dashboard page
 
+<img width="1696" height="1377" alt="image" src="https://github.com/user-attachments/assets/e8a2766a-8773-46aa-bbeb-6464241d6552" />
+
+
 ### IT
 Cosa fa:
 1. Mostra KPI sintetici (`totalEvents`, `totalAlerts`, `dosAttacks`, `bruteForceAttacks`).
@@ -94,6 +97,9 @@ Reference:
 2. [sentinel-api/src/main/java/com/sentinel/api/controller/DashboardController.java](../sentinel-api/src/main/java/com/sentinel/api/controller/DashboardController.java)
 
 ### 5.2 Investigation page
+
+<img width="1696" height="1377" alt="image" src="https://github.com/user-attachments/assets/21fd47ee-6220-430b-9400-c487a2565ff4" />
+
 
 ### IT
 Cosa fa:
