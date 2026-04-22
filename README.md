@@ -134,7 +134,7 @@ The dashboard will be available at `http://localhost:5173`.
 - Manual mode: press `CTRL+C` in each terminal, then `docker compose down`
 - Docker mode: `docker compose down`
 
-## 🎓 Academic Context (Professor View)
+##  Academic Context (Professor View)
 
 This project was developed as a university course assignment, with a primary focus on correctly applying enterprise software architecture and integration patterns taught in lectures (e.g., Prof. Tramontana's slides).
 
@@ -155,5 +155,5 @@ The following patterns have been explicitly implemented in the codebase:
 
 For exact file locations and detailed explanations of how each pattern is coded, please review the dedicated **[MAPPATURA_DESIGN_PATTERNS.md](MAPPATURA_DESIGN_PATTERNS.md)** document.
 
-## 📜 License
+##  License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
