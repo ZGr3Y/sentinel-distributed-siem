@@ -22,13 +22,13 @@ This manual is for first-time Sentinel users. It includes:
 Requisiti minimi:
 1. Docker + Docker Compose.
 2. Browser moderno.
-3. Opzionale per sviluppo manuale: JDK 21+, Node.js 18+, npm.
+3. Opzionale per sviluppo manuale: JDK 21+, Node.js 20.x, npm.
 
 ### EN
 Minimum requirements:
 1. Docker + Docker Compose.
 2. Modern browser.
-3. Optional for manual development: JDK 21+, Node.js 18+, npm.
+3. Optional for manual development: JDK 21+, Node.js 20.x, npm.
 
 ## 3. Quick Start (Recommended) / Avvio rapido (consigliato)
 
@@ -194,7 +194,7 @@ Recommendation:
 ```bash
 docker compose ps
 curl -u user:password http://localhost:15672/api/overview
-curl http://localhost:8083/auth/login
+curl -X POST http://localhost:8083/auth/login
 curl http://localhost
 ```
 

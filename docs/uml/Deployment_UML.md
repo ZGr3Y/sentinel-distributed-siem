@@ -15,15 +15,15 @@ flowchart TB
             end
 
             subgraph AgentContainer["sentinel-agent"]
-                AgentApp["Java 21 application"]
+                AgentApp["Java 21 application\n(Network: bridge\nvia host.docker.internal)"]
             end
 
             subgraph CoreContainer["sentinel-core"]
-                CoreApp["Java 21 application"]
+                CoreApp["Java 21 application\n(Network: bridge\nvia host.docker.internal)"]
             end
 
             subgraph ApiContainer["sentinel-api"]
-                ApiApp["Java 21 application\nPort 8083"]
+                ApiApp["Java 21 application\nPort 8083\n(Network: bridge\nvia host.docker.internal)"]
             end
 
             subgraph DashboardContainer["sentinel-dashboard"]

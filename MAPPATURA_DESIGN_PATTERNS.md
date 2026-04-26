@@ -66,11 +66,12 @@ public void processMessage(EventDTO event) {
 **Trade-off in Sentinel:** L'Agent genera un `UUIDv4` crittograficamente univoco alla nascita del log. La delega di questo Pattern al Database (`UNIQUE CONSTRAINT`) protegge l'aggregazione matematica da rimbalzi di rete (Redelivery), senza applicare barriere artificiali ai log identici ma temporalmente/logisticamente intesi come separati.
 **Snippet e check atomico:**
 ```java
-String eventId = dto.getEventId();
-// UUID generato alla fonte dall'Agent (es. UUID.randomUUID())
-if (rawEventRepository.existsByEventHash(eventId)) {
+String eventHash = dto.getEventId();
+// Identificatore UUID generato alla fonte.
+try {
+    repository.save(event); // Vincolo UNIQUE su event_hash
+} catch (DataIntegrityViolationException e) {
     log.warn("Duplicato intercettato per Idempotenza.");
-    return; 
 }
 ```
 
@@ -116,8 +117,8 @@ if (!dosLimiter.acquirePermission()) {
 **Teoria:** Un servizio interrotto (o un DataBase in Timeout) deve essere evitato fallendo velocemente senza monopolizzare tutti i timeout di connessione dell'app.
 **Implementazione in Sentinel:** Posto sulle rotte di esportazione dei report aggregati (processi esosi). Se il layer `Storage` soffre, restituisce Subito Report Vuoti/Pieni invece di propagare un disservizio 500 al client.
 ```java
-@CircuitBreaker(name = "reportsService", fallbackMethod = "emptyReportFallback")
-public DailyReport getHugeReportFromDB() { ... }
+@CircuitBreaker(name = "reportService", fallbackMethod = "fallbackGetReport")
+public String getDailyReport() { ... }
 ```
 
 ---
