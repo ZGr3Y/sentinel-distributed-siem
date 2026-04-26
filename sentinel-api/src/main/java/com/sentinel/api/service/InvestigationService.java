@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class InvestigationService {
@@ -23,20 +24,26 @@ public class InvestigationService {
      * Pattern: Request Batch (1.15)
      * Processes a single network request containing multiple IP lookups.
      * Reduces chatty client-server behavior.
+     *
+     * Uses a single IN-clause query instead of N individual queries.
      */
     public BatchQueryResponse processBatchQuery(BatchQueryRequest request) {
-        Map<String, List<Alert>> results = new HashMap<>();
         List<String> ips = request.getIpsToInvestigate();
 
-        if (ips != null && !ips.isEmpty()) {
-            for (String ip : ips) {
-                // In a true highly optimized environment, this might be heavily parallelized
-                // or use a single IN clause: alertRepository.findBySourceIpIn(ips)
-                List<Alert> ipAlerts = alertRepository.findBySourceIp(ip);
-                results.put(ip, ipAlerts);
-            }
+        if (ips == null || ips.isEmpty()) {
+            return new BatchQueryResponse(new HashMap<>(), 0);
         }
 
-        return new BatchQueryResponse(results, ips != null ? ips.size() : 0);
+        // Single query for all IPs, then group results in memory
+        List<Alert> allAlerts = alertRepository.findBySourceIpIn(ips);
+        Map<String, List<Alert>> results = allAlerts.stream()
+                .collect(Collectors.groupingBy(Alert::getSourceIp));
+
+        // Ensure all queried IPs are present in the map (even with empty lists)
+        for (String ip : ips) {
+            results.putIfAbsent(ip, List.of());
+        }
+
+        return new BatchQueryResponse(results, ips.size());
     }
 }

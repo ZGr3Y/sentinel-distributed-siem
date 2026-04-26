@@ -17,10 +17,14 @@ Sentinel adotta un'architettura **Event-Driven** (EDA) mediata da Broker, integr
         `MQ[RabbitMQ Broker]`  
     `end`  
       
+    `subgraph "Presentation Layer"`  
+        `SPA[Sentinel Dashboard - React SPA]`  
+    `end`  
+
     `subgraph "Processing Layer"`  
-        `Core[Sentinel Core]`  
-        `Engine[Analysis Engine]`  
-        `API[REST API Controller]`  
+        `Core[Sentinel Core - Event Processing]`  
+        `Engine[Analytics Engine]`  
+        `API[Sentinel API - REST Controllers]`  
     `end`  
       
     `subgraph "Storage Layer"`  
@@ -31,7 +35,8 @@ Sentinel adotta un'architettura **Event-Driven** (EDA) mediata da Broker, integr
     `MQ -->|Push| Core`  
     `Core -->|Events| Engine`  
     `Engine -->|Persist| DB`  
-    `API -->|Query| DB`
+    `API -->|Query/Command| DB`
+    `SPA -->|HTTP/REST| API`
 
 ## **2\. Decisioni Architetturali (Design Rationale)**
 
@@ -58,6 +63,16 @@ Sentinel adotta un'architettura **Event-Driven** (EDA) mediata da Broker, integr
 * **Problema:** L'utente vuole salvare bozze di investigazione lunghe (filtri complessi, note). Mettere questi dati nel JWT ne aumenterebbe la dimensione, rallentando ogni richiesta HTTP (banda rete).  
 * **Soluzione:** Il JWT contiene solo l'identità (sub). Lo stato applicativo (bozza) è salvato sul server (user\_sessions), recuperato tramite ID utente.  
 * **Pattern:** *Session State* (Slide L6).
+
+### **2.5 Perché decostruire in una React SPA?**
+
+* **Problema:** L'uso di pagine JSP/Thymeleaf all'interno del backend `sentinel-api` causerebbe uno stretto accoppiamento (tight-coupling) tra la presentazione e i dati, gravando le risorse RAM della JVM e costringendo a ricaricamenti di pagina completi per ogni indagine analitica.  
+* **Soluzione:** Implementare il layer di Front-End come una **Single Page Application** completamente indipendente (Vite/React). L'uso del DOM virtuale fornisce interattività istantanea ai grafici in tempo reale e scarica il 100% dell'onere computazionale visivo sul client browser.
+
+### **2.6 Perché l'astrazione Cloud CI/CD?**
+
+* **Problema:** Negli ambienti distribuiti universitari, le differenze di sistema operativo e librerie locali rischiano di rompere la build ("Sul mio PC funzionava").  
+* **Soluzione:** Tutte le modifiche vengono intercettate dalle **GitHub Actions**. Un runner Ubuntu isolato garantisce che sia il Backend (Java 21 via Maven Wrapper nativo) che il Frontend (Node.js Linter & Builder) seguano regole deterministiche di integrità prima di ogni fusione sui branch protetti.
 
 ## **3\. Strategie di Resilienza**
 

@@ -1,6 +1,8 @@
 package com.sentinel.common.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,6 +13,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "draft_states")
+@Getter
+@Setter
+@NoArgsConstructor
 public class DraftState {
 
     @Id
@@ -26,42 +31,17 @@ public class DraftState {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    public DraftState() {
-        this.id = UUID.randomUUID().toString();
-    }
-
     public DraftState(String userId, String draftPayload) {
-        this();
+        this.id = UUID.randomUUID().toString();
         this.userId = userId;
         this.draftPayload = draftPayload;
         this.updatedAt = LocalDateTime.now();
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getDraftPayload() {
-        return draftPayload;
-    }
-
-    public void setDraftPayload(String draftPayload) {
-        this.draftPayload = draftPayload;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    @PrePersist
+    private void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
     }
 }

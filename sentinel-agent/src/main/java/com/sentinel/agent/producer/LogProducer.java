@@ -1,7 +1,7 @@
 package com.sentinel.agent.producer;
 
 import com.sentinel.common.domain.dto.EventDTO;
-import com.sentinel.agent.config.RabbitMQConfig;
+import com.sentinel.common.config.RabbitMQConfig;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;

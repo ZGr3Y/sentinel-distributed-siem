@@ -8,19 +8,19 @@
 
 Memorizza il flusso di eventi in ingresso.
 
-* id (**BIGSERIAL**, PK): Identificativo auto-incrementante.  
-* event\_hash (**VARCHAR(64)**, UNIQUE): Hash SHA-256 per idempotenza. Indice B-Tree.  
-* source\_ip (**VARCHAR(45)**): Supporta IPv4 e IPv6. Indice per ricerche veloci.  
-* request\_path (**TEXT**): Path della richiesta (es. /index.html).  
-* status\_code (**INTEGER**): Codice HTTP.  
-* severity (**VARCHAR(10)**): Enum ('INFO', 'WARNING', 'CRITICAL').  
-* ingested\_at (**TIMESTAMP**): Data inserimento (Default NOW()).
+* id (**VARCHAR(36)**, PK): Identificativo univoco universale (UUIDv4) assegnato alla sorgente.  
+* event\_hash (**VARCHAR(64)**, UNIQUE): Identificatore crittografico primario ai fini dell'idempotenza transazionale (valorizzato con UUIDv4). Indice B-Tree.  
+* source\_ip (**VARCHAR(45)**): Supporta IPv4 e IPv6. Indice per l'ottimizzazione delle ricerche.  
+* request\_path (**TEXT**): Percorso formale della richiesta (es. /index.html).  
+* status\_code (**INTEGER**): Codice di stato del protocollo HTTP.  
+* severity (**VARCHAR(10)**): Enumerazione logica ('INFO', 'WARNING', 'CRITICAL').  
+* ingested\_at (**TIMESTAMP**): Marca temporale di inserimento (Default NOW()).
 
 ### **Tabella: alerts**
 
 Memorizza le anomalie rilevate.
 
-* id (**BIGSERIAL**, PK).  
+* id (**VARCHAR(36)**, PK).  
 * alert\_type (**VARCHAR(50)**): Enum ('DOS\_ATTACK', 'BRUTE\_FORCE', 'PATTERN\_MATCH').  
 * source\_ip (**VARCHAR(45)**).  
 * description (**TEXT**): Dettagli dell'anomalia (es. "Rate: 150 req/min").  
@@ -28,14 +28,15 @@ Memorizza le anomalie rilevate.
 
 ### **Tabella: daily\_reports (Pattern: Serialized LOB)**
 
-* report\_date (**DATE**, PK): Chiave primaria naturale.  
-* report\_json (**JSONB**): Oggetto JSON binario contenente il report aggregato.
+* id (**VARCHAR(36)**, PK): Identificativo sintetico primario.
+* report\_date (**DATE**, UNIQUE): Chiave logica naturale.  
+* report\_data (**TEXT**): Struttura dati serializzata in formato JSON delineante le metriche aggregate.
 
 ## **2\. Design delle API (Interfacce REST)**
 
 ### **2.1 Dashboard Facade**
 
-**GET** /api/v1/dashboard/summary
+**GET** /api/dashboard/summary
 
 * **Response DTO (DashboardSummaryDTO):**  
   `{`  
@@ -54,11 +55,11 @@ Memorizza le anomalie rilevate.
 
 ### **2.2 Batch Investigation (Pattern: Request Batch)**
 
-**POST** /api/v1/investigation/batch
+**POST** /api/investigation/batch
 
 * **Request Body:**  
   `{`  
-    `"ipAddresses": ["10.0.0.1", "192.168.1.50", "172.16.0.1"]`  
+    `"ipsToInvestigate": ["10.0.0.1", "192.168.1.50", "172.16.0.1"]`  
   `}`
 
 * **Logica:** Il controller itera sulla lista (o usa query IN (...)) e costruisce una lista di DTO.  
@@ -66,26 +67,27 @@ Memorizza le anomalie rilevate.
 
 ## **3\. Class Design (Componenti Core)**
 
-### **3.1 LogIngestionService**
+### **3.1 EventConsumerService (Ingestion & Demultiplexing)**
 
-Servizio Spring (@Service) responsabile del consumo.
+Servizio Spring (@Service) responsabile del consumo e classificazione primordiale.
 
 * **Metodo:** processMessage(EventDTO event)  
 * **Annotazione:** @RabbitListener(queues \= "${sentinel.queue.ingress}")  
 * **Flusso:**  
-  1. Calcola Hash di event.  
-  2. if (rawEventRepository.existsByEventHash(hash)) return; (Idempotenza).  
-  3. Mappa DTO \-\> Entity RawEvent.  
+  1. Estrae o computa l'ID univoco dell'evento (UUIDv4) per l'Idempotency Filter.  
+  2. Tenta la persistenza su database tramite `repository.save(event)`. In caso di duplicato, il vincolo UNIQUE su DB solleva una `DataIntegrityViolationException` gestita scartando silenziosamente il messaggio.  
+  3. Mappa DTO \-\> Entity RawEvent prima del salvataggio.  
   4. Salva su DB.  
-  5. Invoca AnalysisEngine.analyze(event).
+  5. Assegna una Severity basata su Regex e rigira a `analyticsService.analyzeEvent(event)` delegando l'analisi pesante in thread asincrono separato.
 
-### **3.2 AnalysisEngine (Sliding Window)**
+### **3.2 AnalyticsService (Rate Limiting & Threat Detection)**
 
-Componente Singleton (@Component).
+Componente Singleton (@Service).
 
-* **Campo:** ConcurrentHashMap\<String, Deque\<LocalDateTime\>\> trafficWindow.  
-* **Metodo:** analyze(EventDTO event)  
-  1. trafficWindow.computeIfAbsent(ip, k \-\> new ArrayDeque\<\>()).  
-  2. deque.addLast(now).  
-  3. cleanUpOldRequests(deque): Rimuove timestamp \< (now \- 60s).  
-  4. if (deque.size() \> THRESHOLD) \-\> alertService.createAlert(...).
+* **Campo:** `RateLimiterRegistry rateLimiterRegistry` fornito da Resilience4j.
+* **Metodi di Detection:** `checkDos(sourceIp)`, `checkBruteForce(event)`, `checkPatternMatch(event, sourceIp)`
+* **Flusso (Esempio trino combinato):**
+  1. Le chiamate Volume-Based ottengono il RateLimiter per l'IP via `rateLimiterRegistry.rateLimiter(...)`.
+  2. Fallimento del Limit (Es. DoS > 100/min o BF > 10 fails/min) scatena subito i rispettivi alert volumetrici se fuori dal periodo di Cooldown per l'IP.
+  3. Elaborazione Pattern Match (Payload HTTP infetti `../../etc/passwd`) aggira Resilience4j verificando direttamente la gravità `CRITICAL` ereditata ed emettendo flag istantanei sul database.
+  4. L'ibridazione Resilience4j + Pattern statici garantisce concorrenza thread-safe e altissime prestazioni, superando le logiche di Database Polling tradizionali.

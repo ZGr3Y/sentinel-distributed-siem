@@ -6,6 +6,7 @@ import com.sentinel.common.domain.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Component;
  * Seeds default users on application startup using Scrypt-hashed passwords,
  * following the exact API from Prof. Tramontana's slides:
  * SCryptUtil.scrypt(passwd, 32768, 8, 1)
+ *
+ * Only active in 'dev' profile to prevent seeding in production.
  */
 @Component
+@Profile("dev")
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);

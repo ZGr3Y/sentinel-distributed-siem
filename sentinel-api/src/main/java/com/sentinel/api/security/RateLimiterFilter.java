@@ -37,7 +37,7 @@ public class RateLimiterFilter implements Filter {
 
         // tryAcquire returns false immediately if no permits are available
         if (!rateLimiter.tryAcquire()) {
-            log.warn("⚠️ Rate limit exceeded. Rejecting request.");
+            log.warn("Rate limit exceeded. Rejecting request.");
             HttpServletResponse httpResponse = (HttpServletResponse) response;
             httpResponse.setStatus(429); // Too Many Requests
             httpResponse.getWriter().write("{\"error\": \"Rate limit exceeded. Please slow down.\"}");

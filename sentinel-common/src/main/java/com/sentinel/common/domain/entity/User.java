@@ -1,6 +1,8 @@
 package com.sentinel.common.domain.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,6 +16,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
 public class User {
 
     @Id
@@ -42,47 +47,21 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public User() {
+    public User(String username, String passwordHash, String role) {
         this.id = UUID.randomUUID().toString();
         this.createdAt = LocalDateTime.now();
-    }
-
-    public User(String username, String passwordHash, String role) {
-        this();
         this.username = username;
         this.passwordHash = passwordHash;
         this.role = role;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+    @PrePersist
+    private void prePersist() {
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }

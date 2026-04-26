@@ -1,5 +1,5 @@
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 import { Shield, Activity, FileText, LogOut } from 'lucide-react';
 
 export const MainLayout = () => {

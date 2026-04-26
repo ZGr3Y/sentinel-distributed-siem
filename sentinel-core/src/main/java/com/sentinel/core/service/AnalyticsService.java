@@ -72,7 +72,7 @@ public class AnalyticsService {
 
             // Only generate an alert if we haven't alerted for this IP in the last minute
             if (now - lastAlert > ALERT_COOLDOWN_MS) {
-                log.warn("🚨 DOS ATTACK DETECTED from IP: {}", sourceIp);
+                log.warn("DOS ATTACK DETECTED from IP: {}", sourceIp);
                 createAlert("DOS", sourceIp, "Volume exceeded 100 requests per minute.");
                 lastDosAlertTime.put(sourceIp, now);
             }
@@ -92,7 +92,7 @@ public class AnalyticsService {
                 long lastAlert = lastBruteForceAlertTime.getOrDefault(sourceIp, 0L);
 
                 if (now - lastAlert > ALERT_COOLDOWN_MS) {
-                    log.warn("🚨 BRUTE FORCE ATTACK DETECTED from IP: {}", sourceIp);
+                    log.warn("BRUTE FORCE ATTACK DETECTED from IP: {}", sourceIp);
                     createAlert("BRUTE_FORCE", sourceIp, "Failed authentication > 10 times in 1 minute.");
                     lastBruteForceAlertTime.put(sourceIp, now);
                 }
@@ -106,7 +106,7 @@ public class AnalyticsService {
             long lastAlert = lastPatternMatchAlertTime.getOrDefault(sourceIp, 0L);
 
             if (now - lastAlert > ALERT_COOLDOWN_MS) {
-                log.warn("🚨 PATTERN MATCH (MALICIOUS PAYLOAD) DETECTED from IP: {}", sourceIp);
+                log.warn("PATTERN MATCH (MALICIOUS PAYLOAD) DETECTED from IP: {}", sourceIp);
                 createAlert("PATTERN_MATCH", sourceIp,
                         "Malicious path/command injection detected: " + event.getEndpoint());
                 lastPatternMatchAlertTime.put(sourceIp, now);

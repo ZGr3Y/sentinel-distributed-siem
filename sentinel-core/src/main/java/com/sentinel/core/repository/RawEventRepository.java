@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 import com.sentinel.common.domain.entity.RawEvent;
 
 @Repository
-public interface RawEventRepository extends JpaRepository<RawEvent, String> {
+public interface RawEventRepository extends JpaRepository<RawEvent, Long> {
 }

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -15,6 +16,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "daily_reports")
+@Getter
+@Setter
+@NoArgsConstructor
 public class DailyReport {
 
     @Id
@@ -24,37 +28,12 @@ public class DailyReport {
     @Column(name = "report_date", nullable = false, unique = true)
     private LocalDate reportDate;
 
-    // We store the complex JSON structure in a single text column
     @Column(name = "report_data", columnDefinition = "TEXT")
     private String reportData;
 
-    public DailyReport() {
-        this.id = UUID.randomUUID().toString();
-    }
-
     public DailyReport(LocalDate reportDate, String reportData) {
-        this();
+        this.id = UUID.randomUUID().toString();
         this.reportDate = reportDate;
-        this.reportData = reportData;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public LocalDate getReportDate() {
-        return reportDate;
-    }
-
-    public void setReportDate(LocalDate reportDate) {
-        this.reportDate = reportDate;
-    }
-
-    public String getReportData() {
-        return reportData;
-    }
-
-    public void setReportData(String reportData) {
         this.reportData = reportData;
     }
 }
