@@ -1,5 +1,22 @@
 # 🛡️ Sentinel Distributed SIEM
 
+<p align="center">
+	<img src="https://img.shields.io/badge/Java-21-007396?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
+	<img src="https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot 3.x" />
+	<img src="https://img.shields.io/badge/Spring_Security-6-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white" alt="Spring Security 6" />
+	<img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logoColor=white" alt="Spring Data JPA" />
+	<img src="https://img.shields.io/badge/Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white" alt="Maven" />
+	<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+	<img src="https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Compose" />
+	<img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+	<img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white" alt="RabbitMQ" />
+	<img src="https://img.shields.io/badge/Resilience4j-2F3134?style=for-the-badge&logoColor=white" alt="Resilience4j" />
+	<img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
+	<img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+	<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+	<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
+</p>
+
 Sentinel is a distributed Security Information and Event Management (SIEM) system designed for real-time log ingestion, analysis, and threat detection. It leverages a modular architecture to scale ingestion and analytics independently.
 
 ##  Architecture
@@ -87,7 +104,7 @@ This project implements several architectural and messaging patterns, including:
 - **Serialized LOB**: Optimizing database storage for analytics.
 - **Circuit Breaker**: System resilience during failures.
 
-Refer to [DESIGN_PATTERNS.md](file:///home/paolo/Downloads/IDSD/Progetto/DESIGN_PATTERNS.md) for more details.
+Refer to [MAPPATURA_DESIGN_PATTERNS.md](MAPPATURA_DESIGN_PATTERNS.md) for more details.
 
 ## 📜 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
