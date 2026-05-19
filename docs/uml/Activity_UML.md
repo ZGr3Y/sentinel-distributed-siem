@@ -21,8 +21,9 @@ flowchart TD
     ShiftNow --> PublishEvent
 
     %% Generate mode path
-    AgentMode -- generate --> BuildSynthetic[Generate synthetic event]
-    BuildSynthetic --> PublishEvent[Publish EventDTO to RabbitMQ]
+    AgentMode -- generate --> BuildSynthetic[Generate synthetic event properties]
+    BuildSynthetic --> SetGenId[Set eventId UUID]
+    SetGenId --> PublishEvent[Publish EventDTO to RabbitMQ]
 
     %% Core processing
     PublishEvent --> ConsumeEvent[Core consumes event]
