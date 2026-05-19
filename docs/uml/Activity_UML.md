@@ -14,7 +14,7 @@ flowchart TD
     IsValid -- No --> ReadLog
     IsValid -- Yes --> CalcDelta[Compute time delta]
     CalcDelta --> SleepReplay{Delta > 0?}
-    SleepReplay -- Yes --> WaitReplay[Thread.sleep(delta/speedup)]
+    SleepReplay -- Yes --> WaitReplay["Thread.sleep(delta/speedup)"]
     SleepReplay -- No --> SetReplayId
     WaitReplay --> SetReplayId[Set eventId UUID]
     SetReplayId --> ShiftNow[Shift timestamp to now]
